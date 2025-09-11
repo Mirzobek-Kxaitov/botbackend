@@ -35,6 +35,16 @@ async def startup():
 async def root():
     return {"message": "Barbershop Booking API"}
 
+@app.get("/available-times/today")
+async def get_today_available_times(db: Session = Depends(get_db)):
+    today = datetime.now().strftime("%Y-%m-%d")
+    return await get_available_times_internal(today, db)
+
+@app.get("/available-times/tomorrow")
+async def get_tomorrow_available_times(db: Session = Depends(get_db)):
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    return await get_available_times_internal(tomorrow, db)
+
 @app.get("/available-times/{date}")
 async def get_available_times(date: str, db: Session = Depends(get_db)):
     try:
@@ -42,6 +52,9 @@ async def get_available_times(date: str, db: Session = Depends(get_db)):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     
+    return await get_available_times_internal(date, db)
+
+async def get_available_times_internal(date: str, db: Session):
     all_times = [f"{hour:02d}:00" for hour in range(9, 22)]
     
     booked_times = db.query(Booking.booking_time).filter(
@@ -52,7 +65,7 @@ async def get_available_times(date: str, db: Session = Depends(get_db)):
     booked_times_list = [time[0] for time in booked_times]
     available_times = [time for time in all_times if time not in booked_times_list]
     
-    return {"available_times": available_times}
+    return {"available_times": available_times, "date": date}
 
 @app.get("/bookings/{date}")
 async def get_bookings(date: str, db: Session = Depends(get_db)):

@@ -1,10 +1,9 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from sqlalchemy.orm import sessionmaker
 from database import engine, User, Booking, create_tables
-from datetime import datetime, timedelta
 import json
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -31,13 +30,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             context.user_data['registration_step'] = 'name'
         else:
             keyboard = [
-                [KeyboardButton("📅 Bron qilish", web_app=WebAppInfo(url=WEBAPP_URL))]
+                [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
             ]
             reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
             
             await update.message.reply_text(
                 f"Xush kelibsiz, {existing_user.name}! 🎉\n\n"
-                "Yangi bron qilish uchun tugmani bosing:",
+                "Sartaroshxonaga bron qilish uchun quyidagi tugmani bosing:",
                 reply_markup=reply_markup
             )
     finally:
@@ -62,6 +61,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reply_markup=reply_markup
             )
         
+            
         elif context.user_data.get('registration_step') == 'phone' and update.message.contact:
             phone = update.message.contact.phone_number
             name = context.user_data.get('name')
@@ -71,7 +71,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             db.commit()
             
             keyboard = [
-                [KeyboardButton("📅 Bron qilish", web_app=WebAppInfo(url=WEBAPP_URL))]
+                [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
             ]
             reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
             
@@ -79,7 +79,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"Ro'yxatdan o'tish muvaffaqiyatli yakunlandi! ✅\n\n"
                 f"Ism: {name}\n"
                 f"Telefon: {phone}\n\n"
-                "Endi bron qilish uchun tugmani bosing:",
+                "Endi sartaroshxonaga bron qilish uchun quyidagi tugmani bosing:",
                 reply_markup=reply_markup
             )
             
@@ -87,6 +87,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     finally:
         db.close()
+
 
 async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
