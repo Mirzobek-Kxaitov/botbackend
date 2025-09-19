@@ -3,25 +3,29 @@ version: '3.8'
 services:
   # FastAPI backend service
   api:
-    build: .
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./bookings.db:/app/bookings.db
-      - ./.env:/app/.env
+      - ./backend/.env:/app/.env
     environment:
       - DATABASE_URL=sqlite:///./bookings.db
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000
     restart: unless-stopped
     networks:
       - bookingbot-network
 
   # Telegram bot service
   bot:
-    build: .
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile
     volumes:
       - ./bookings.db:/app/bookings.db
-      - ./.env:/app/.env
+      - ./backend/.env:/app/.env
     environment:
       - DATABASE_URL=sqlite:///./bookings.db
     command: python bot.py
