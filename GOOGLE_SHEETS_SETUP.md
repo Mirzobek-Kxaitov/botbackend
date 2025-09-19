@@ -30,14 +30,14 @@ Sheet ID: 1aWhfN0_AX1yT5yCRgdXZxTKjIiBoGVq4v2hdS29Bopk
 ```
 
 **💡 Sheet ID ni saqlab qoying!**
-
+https://docs.google.com/spreadsheets/d/1aWhfN0_AX1yT5yCRgdXZxTKjIiBoGVq4v2hdS29Bopk/edit?usp=sharing
 ---
 
 ## 🔧 2-QADAM: Google Cloud Service Account
 
 ### 2.1. Google Cloud Console ga kirish
 ```
-🔗 https://console.cloud.google.com
+🔗 
 ```
 
 ### 2.2. Yangi loyiha yaratish (agar yo'q bo'lsa)
