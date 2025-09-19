@@ -33,13 +33,17 @@ bookingbot/
 
 ### 1. Muhit o'zgaruvchilarini sozlash
 
-`.env` faylini yarating va quyidagi qiymatlarni kiriting:
+`backend/.env` faylini yarating yoki `.env.example` dan nusxalab, quyidagi qiymatlarni to'ldiring:
 
 ```env
 BOT_TOKEN=your_telegram_bot_token_here
 ADMIN_CHAT_ID=your_admin_chat_id_here
 DATABASE_URL=sqlite:///./bookings.db
+ENVIRONMENT=production
+DEBUG=false
 ```
+
+**⚠️ Muhim:** Production da o'z bot tokeningizni va admin ID ngizni ishlating!
 
 ### 2. Telegram Bot tokenini olish
 
