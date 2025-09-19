@@ -57,8 +57,12 @@ DEBUG=false
 # IXTIYORIY SOZLAMALAR
 # =================================
 
-# Google Sheets integration (agar kerak bo'lsa)
+# Google Sheets integration (IXTIYORIY - agar avtomatik Excel jadval kerak bo'lsa)
 GOOGLE_SHEET_ID=your_google_sheet_id_here
+
+# Google Sheets dependencies (agar GOOGLE_SHEET_ID ishlatilsa)
+# pip install gspread oauth2client
+# credentials.json faylini backend/ papkaga qo'ying
 
 # Frontend URL (agar alohida domain bo'lsa)
 FRONTEND_URL=https://your-frontend-domain.com
