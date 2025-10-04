@@ -2,12 +2,12 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 
-// Set theme colors
+// Set theme colors to light mode
 if (tg.themeParams) {
-    document.documentElement.style.setProperty('--tg-theme-bg-color', '#1a1a1a');
-    document.documentElement.style.setProperty('--tg-theme-text-color', '#f5f5f5');
-    document.documentElement.style.setProperty('--tg-theme-button-color', '#D4AF37');
-    document.documentElement.style.setProperty('--tg-theme-button-text-color', '#1a1a1a');
+    document.documentElement.style.setProperty('--tg-theme-bg-color', '#FFFFFF');
+    document.documentElement.style.setProperty('--tg-theme-text-color', '#374151');
+    document.documentElement.style.setProperty('--tg-theme-button-color', '#E5E7EB');
+    document.documentElement.style.setProperty('--tg-theme-button-text-color', '#374151');
 }
 
 // Global variables
@@ -168,24 +168,20 @@ async function loadAvailableTimes(date) {
         if (data.available_times && data.available_times.length > 0) {
             data.available_times.forEach((time, index) => {
                 const timeButton = document.createElement('button');
-                timeButton.className = 'time-slot p-4 text-center rounded-lg font-medium shine-effect';
-                timeButton.style.animationDelay = `${index * 0.1}s`;
-                timeButton.innerHTML = `
-                    <div class="text-sm opacity-80">⏰</div>
-                    <div class="font-semibold">${time}</div>
-                `;
+                timeButton.className = 'time-slot';
+                timeButton.style.animationDelay = `${index * 0.05}s`;
+                timeButton.textContent = time;
                 timeButton.addEventListener('click', () => selectTime(time, timeButton));
                 timeSlots.appendChild(timeButton);
             });
-            
+
             // Add fade-in animation to time slots
             timeSlots.classList.add('fade-in-up');
         } else {
             timeSlots.innerHTML = `
                 <div class="col-span-3 text-center p-6">
-                    <div class="text-4xl mb-2">😔</div>
-                    <p class="text-text-light font-medium">Bu kun uchun mavjud vaqt yo'q</p>
-                    <p class="text-text-gray text-sm mt-1">Boshqa kun tanlang</p>
+                    <p style="color: var(--text-dark); font-weight: 500;">Bu kun uchun mavjud vaqt yo'q</p>
+                    <p class="text-sm mt-1" style="color: var(--text-gray);">Boshqa kun tanlang</p>
                 </div>
             `;
         }
@@ -204,9 +200,8 @@ async function loadAvailableTimes(date) {
         
         timeSlots.innerHTML = `
             <div class="col-span-3 text-center p-6">
-                <div class="text-4xl mb-2">⚠️</div>
-                <p class="text-red-400 font-medium">${errorMessage}</p>
-                <p class="text-text-gray text-sm mt-1">Iltimos, qayta urinib ko'ring</p>
+                <p class="text-red-500 font-medium">${errorMessage}</p>
+                <p class="text-sm mt-1" style="color: var(--text-gray);">Iltimos, qayta urinib ko'ring</p>
             </div>
         `;
         
@@ -505,9 +500,8 @@ function displayBookings(bookings, date) {
 
     if (!bookings || bookings.length === 0) {
         bookingsList.innerHTML = `
-            <div class="text-center text-text-gray py-8">
-                <div class="text-3xl mb-2">📅</div>
-                <div class="text-lg font-medium mb-2">${formattedDate}</div>
+            <div class="text-center py-8" style="color: var(--text-gray);">
+                <div class="text-lg font-medium mb-2" style="color: var(--text-dark);">${formattedDate}</div>
                 <div>Bu sanada hech qanday bron yo'q</div>
             </div>
         `;
@@ -516,27 +510,27 @@ function displayBookings(bookings, date) {
 
     let bookingsHtml = `
         <div class="text-center mb-4">
-            <div class="text-lg font-semibold text-text-light">${formattedDate}</div>
-            <div class="text-text-gray">Jami ${bookings.length} ta bron</div>
+            <div class="text-lg font-semibold" style="color: var(--text-dark);">${formattedDate}</div>
+            <div style="color: var(--text-gray);">Jami ${bookings.length} ta bron</div>
         </div>
     `;
 
     bookings.forEach((booking, index) => {
         bookingsHtml += `
-            <div class="glass-effect p-4 rounded-xl border border-gold/20">
+            <div class="p-4 rounded-xl" style="background: white; border: 1px solid var(--accent-gray);">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-gold text-primary-dark flex items-center justify-center font-bold text-sm">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background: var(--accent-gray); color: var(--text-dark);">
                             ${index + 1}
                         </div>
                         <div>
-                            <div class="text-text-light font-medium">${booking.user_name || 'Noma\'lum'}</div>
-                            <div class="text-text-gray text-sm">${booking.user_phone || 'Telefon ko\'rsatilmagan'}</div>
+                            <div class="font-medium" style="color: var(--text-dark);">${booking.user_name || 'Noma\'lum'}</div>
+                            <div class="text-sm" style="color: var(--text-gray);">${booking.user_phone || 'Telefon ko\'rsatilmagan'}</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-gold font-bold">${booking.time}</div>
-                        <div class="text-text-gray text-xs">ID: ${booking.id}</div>
+                        <div class="font-bold" style="color: var(--text-dark);">${booking.time}</div>
+                        <div class="text-xs" style="color: var(--text-gray);">ID: ${booking.id}</div>
                     </div>
                 </div>
             </div>

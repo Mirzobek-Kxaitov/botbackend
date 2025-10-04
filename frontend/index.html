@@ -4,326 +4,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✂️ Elite Barber - Bron qilish</title>
+    <title>RUSTAM BARBER - Bron qilish</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-gold: #D4AF37;
-            --primary-dark: #1a1a1a;
-            --secondary-dark: #2d2d2d;
-            --accent-gold: #F4E4BC;
-            --text-light: #f5f5f5;
-            --text-gray: #888;
+            --primary-white: #FFFFFF;
+            --card-white: #FFFFFF;
+            --accent-gray: #E5E7EB;
+            --text-dark: #374151;
+            --text-gray: #6B7280;
+            --shadow-color: rgba(0, 0, 0, 0.06);
         }
-        
+
         * {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: #FFFFFF;
             min-height: 100vh;
         }
         
-        .gold-gradient {
-            background: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 100%);
+        .main-card {
+            background: #FFFFFF;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            border-radius: 24px;
+            max-width: 420px;
+            margin: 0 auto;
         }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .text-gold {
-            color: #D4AF37;
-        }
-        
-        .border-gold {
-            border-color: #D4AF37;
-        }
-        
-        .ring-gold {
-            --tw-ring-color: #D4AF37;
-        }
-        
-        .to-gold {
-            --tw-gradient-to: #D4AF37;
-        }
-        
-        .text-text-light {
-            color: #f5f5f5;
-        }
-        
-        .text-text-gray {
-            color: #888;
-        }
-        
-        .btn-gold {
-            background: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 100%);
-            color: #1a1a1a;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-        }
-        
-        .btn-gold:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
-        }
-        
-        .btn-outline-gold {
-            border: 2px solid #D4AF37;
-            color: #D4AF37;
-            background: transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-gold:hover {
-            background: #D4AF37;
-            color: #1a1a1a;
-            transform: translateY(-2px);
-        }
-        
-        .time-slot {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            color: #f5f5f5;
-            transition: all 0.3s ease;
-        }
-        
-        .time-slot:hover {
-            border-color: #D4AF37;
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .time-slot.selected {
-            background: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 100%);
-            color: #1a1a1a;
-            border-color: #D4AF37;
-        }
-        
-        .calendar-day {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            color: #f5f5f5;
-            transition: all 0.3s ease;
-        }
-        
-        .calendar-day:hover:not(.disabled) {
-            background: rgba(212, 175, 55, 0.2);
-            border-color: #D4AF37;
-            transform: scale(1.05);
-        }
-        
-        .calendar-day.selected {
-            background: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 100%);
-            color: #1a1a1a;
-            border-color: #D4AF37;
-        }
-        
-        .calendar-day.disabled {
-            background: rgba(255, 255, 255, 0.02);
-            color: #444;
-            cursor: not-allowed;
-        }
-        
-        .shine-effect {
+
+        .card-header {
+            padding: 2rem;
+            text-align: center;
             position: relative;
-            overflow: hidden;
         }
-        
-        .shine-effect::before {
-            content: '';
+
+        .verification-badge {
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            top: 1rem;
+            right: 1rem;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .shine-effect:hover::before {
-            left: 100%;
+
+        .barber-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+
+        .brand-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .brand-subtitle {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-gray);
+        }
+
+        .quick-select-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-today {
+            background: var(--accent-gray);
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-today.selected {
+            background: var(--accent-gray);
+            color: var(--text-dark);
+        }
+
+        .btn-tomorrow {
+            background: #FFFFFF;
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            border: 2px solid var(--accent-gray);
+            cursor: pointer;
+        }
+
+        .btn-tomorrow:hover {
+            background: var(--accent-gray);
+        }
+
+        .btn-tomorrow.selected {
+            background: var(--accent-gray);
+            border-color: var(--accent-gray);
+        }
+
+        .time-slot {
+            background: #FFFFFF;
+            border: 2px solid var(--accent-gray);
+            color: var(--text-dark);
+            padding: 0.875rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .time-slot:hover {
+            background: var(--accent-gray);
+            border-color: var(--accent-gray);
+        }
+
+        .time-slot.selected {
+            background: var(--accent-gray);
+            border-color: var(--accent-gray);
+            color: var(--text-dark);
+        }
+
+        .calendar-day {
+            background: #FFFFFF;
+            border: 1px solid var(--accent-gray);
+            color: var(--text-dark);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .calendar-day:hover:not(.disabled) {
+            background: var(--accent-gray);
+            border-color: var(--accent-gray);
+        }
+
+        .calendar-day.selected {
+            background: var(--accent-gray);
+            border-color: var(--accent-gray);
+            color: var(--text-dark);
+        }
+
+        .calendar-day.disabled {
+            background: #FAFAFA;
+            color: #D1D5DB;
+            cursor: not-allowed;
+            border-color: #F3F4F6;
         }
         
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.4s ease-out forwards;
         }
-        
+
         .loading-spinner {
-            border: 3px solid rgba(212, 175, 55, 0.3);
+            border: 3px solid var(--accent-gray);
             border-radius: 50%;
-            border-top: 3px solid #D4AF37;
+            border-top: 3px solid var(--text-dark);
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--accent-gray);
+        }
+
+        .divider span {
+            padding: 0 1rem;
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
         
         /* Mobile optimizations */
         @media (max-width: 480px) {
-            .container {
-                padding: 0.75rem;
+            .main-card {
+                margin: 1rem;
+                border-radius: 20px;
             }
-            
-            .text-4xl {
-                font-size: 2.5rem;
-            }
-            
-            .text-2xl {
-                font-size: 1.5rem;
-            }
-            
-            .p-6 {
-                padding: 1rem;
-            }
-            
-            .calendar-day {
-                min-height: 2.5rem;
-                padding: 0.5rem;
-            }
-            
-            .time-slot {
-                min-height: 3rem;
-                padding: 0.75rem;
-            }
-            
-            .gold-gradient {
+
+            .card-header {
                 padding: 1.5rem;
             }
-        }
-        
-        /* Telegram Web App specific styles */
-        .tg-viewport {
-            --tg-theme-bg-color: var(--primary-dark);
-            --tg-theme-text-color: var(--text-light);
-            --tg-theme-button-color: var(--primary-gold);
-            --tg-theme-button-text-color: var(--primary-dark);
+
+            .barber-logo {
+                width: 100px;
+                height: 100px;
+            }
+
+            .brand-title {
+                font-size: 1.5rem;
+            }
+
+            .calendar-day {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+
+            .time-slot {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="min-h-screen p-4">
-        <!-- Background decorative elements -->
-        <div class="fixed inset-0 overflow-hidden pointer-events-none">
-            <div class="absolute top-20 left-10 w-32 h-32 border-2 border-gold opacity-10 rounded-full"></div>
-            <div class="absolute bottom-20 right-10 w-24 h-24 border border-gold opacity-20 rounded-full"></div>
-            <div class="absolute top-1/2 right-20 w-16 h-16 border border-gold opacity-15 rounded-full"></div>
-        </div>
-        
-        <div class="max-w-md mx-auto glass-effect rounded-2xl shadow-2xl overflow-hidden fade-in-up">
+    <div class="min-h-screen p-4" style="background: #FFFFFF;">
+        <div class="main-card fade-in-up">
             <!-- Header -->
-            <div class="gold-gradient p-6 text-center relative">
-                <div class="absolute inset-0 opacity-20">
-                    <svg class="w-full h-full" viewBox="0 0 100 100" fill="none">
-                        <defs>
-                            <pattern id="barber-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                                <circle cx="10" cy="10" r="1" fill="currentColor" opacity="0.3"/>
-                            </pattern>
-                        </defs>
-                        <rect width="100" height="100" fill="url(#barber-pattern)"/>
+            <div class="card-header">
+                <!-- Verification Badge -->
+                <div class="verification-badge">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M4.66667 7L6.22222 8.55556L9.33333 5.44444M12.4444 7C12.4444 9.87526 10.0975 12.2222 7.22222 12.2222C4.34696 12.2222 2 9.87526 2 7C2 4.12474 4.34696 1.77778 7.22222 1.77778C10.0975 1.77778 12.4444 4.12474 12.4444 7Z" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
 
-                <!-- Admin Panel Button -->
-                <button id="admin-btn" class="absolute top-4 right-4 z-20 bg-primary-dark text-gold p-2 rounded-full shadow-lg opacity-80 hover:opacity-100 transition-all duration-300 hover:scale-110" title="Admin Panel">
-                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <!-- Admin Panel Button (hidden) -->
+                <button id="admin-btn" style="display: none;"></button>
+
+                <!-- Barber Logo -->
+                <div class="barber-logo">
+                    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Head outline -->
+                        <ellipse cx="100" cy="100" rx="60" ry="75" fill="#1a1a1a"/>
+                        <!-- Face -->
+                        <ellipse cx="100" cy="90" rx="50" ry="60" fill="#FFFFFF"/>
+                        <!-- Hair - swept back style -->
+                        <path d="M50 70 Q45 50, 60 45 Q70 42, 80 45 Q90 40, 100 38 Q110 40, 120 45 Q130 42, 140 45 Q155 50, 150 70 L140 75 Q130 65, 120 63 Q110 60, 100 60 Q90 60, 80 63 Q70 65, 60 75 Z" fill="#1a1a1a"/>
+                        <!-- Eyes -->
+                        <ellipse cx="85" cy="85" rx="3" ry="2" fill="#1a1a1a"/>
+                        <ellipse cx="115" cy="85" rx="3" ry="2" fill="#1a1a1a"/>
+                        <!-- Eyebrows -->
+                        <path d="M78 78 Q85 75, 92 78" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
+                        <path d="M108 78 Q115 75, 122 78" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
+                        <!-- Nose -->
+                        <path d="M100 95 L97 100 Q100 102, 103 100 Z" fill="#E5E7EB"/>
+                        <!-- Mustache - stylized curled -->
+                        <path d="M70 105 Q75 100, 85 102 Q95 104, 100 103 Q105 104, 115 102 Q125 100, 130 105 Q128 110, 122 108 Q115 106, 110 108 Q105 110, 100 109 Q95 110, 90 108 Q85 106, 78 108 Q72 110, 70 105 Z" fill="#1a1a1a"/>
+                        <!-- Mustache curls -->
+                        <path d="M70 105 Q65 103, 63 108 Q62 112, 67 113" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M130 105 Q135 103, 137 108 Q138 112, 133 113" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <!-- Beard - full stylized -->
+                        <path d="M75 115 Q72 130, 75 145 Q78 155, 85 160 Q92 165, 100 166 Q108 165, 115 160 Q122 155, 125 145 Q128 130, 125 115 Q120 118, 115 120 Q110 122, 105 123 Q100 124, 95 123 Q90 122, 85 120 Q80 118, 75 115 Z" fill="#1a1a1a"/>
+                        <!-- Beard texture lines -->
+                        <path d="M82 125 Q85 140, 88 150" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                        <path d="M95 127 Q97 142, 98 155" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                        <path d="M105 127 Q103 142, 102 155" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                        <path d="M118 125 Q115 140, 112 150" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                        <!-- Ears -->
+                        <ellipse cx="50" cy="95" rx="8" ry="12" fill="#FFFFFF"/>
+                        <ellipse cx="150" cy="95" rx="8" ry="12" fill="#FFFFFF"/>
                     </svg>
-                </button>
-
-
-                <div class="relative z-10">
-                    <div class="text-4xl mb-2">✂️</div>
-                    <h1 class="text-2xl font-bold text-primary-dark mb-1">ELITE BARBER</h1>
-                    <p class="text-primary-dark opacity-80 text-sm font-medium">Professional Grooming</p>
                 </div>
 
-                <!-- Decorative line -->
-                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-primary-dark opacity-30"></div>
+                <h1 class="brand-title">RUSTAM BARBER</h1>
+                <p class="brand-subtitle">Professional Grooming</p>
             </div>
 
             <!-- Content -->
             <div class="p-6">
                 <!-- Quick Date Selection -->
-                <div id="quick-date-section" class="mb-8 fade-in-up" style="animation-delay: 0.2s">
-                    <h2 class="text-xl font-semibold mb-4 text-text-light flex items-center">
-                        <span class="text-2xl mr-2">📅</span>
-                        Tezkor tanlash
-                    </h2>
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <button id="today-btn" class="btn-gold p-4 rounded-xl font-medium transition shine-effect">
-                            <div class="text-lg mb-1">🌅</div>
-                            <div class="font-semibold">Bugun</div>
+                <div id="quick-date-section" class="mb-6 fade-in-up" style="animation-delay: 0.1s">
+                    <div class="quick-select-buttons">
+                        <button id="today-btn" class="btn-today">
+                            Bugun
                         </button>
-                        <button id="tomorrow-btn" class="btn-outline-gold p-4 rounded-xl font-medium transition shine-effect">
-                            <div class="text-lg mb-1">🌄</div>
-                            <div class="font-semibold">Ertaga</div>
+                        <button id="tomorrow-btn" class="btn-tomorrow">
+                            Ertaga
                         </button>
                     </div>
-                    <div class="text-center mb-4">
-                        <div class="inline-flex items-center">
-                            <div class="w-12 h-px bg-gradient-to-r from-transparent to-gold"></div>
-                            <span class="text-text-gray mx-4 text-sm font-medium">-</span>
-                            <div class="w-12 h-px bg-gradient-to-l from-transparent to-gold"></div>
+                </div>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span>yoki</span>
+                </div>
+
+                <!-- Step 1: Date Selection (calendar) -->
+                <div id="date-section" class="mb-6 fade-in-up" style="animation-delay: 0.2s">
+                    <h2 class="section-title">Boshqa kun tanlash</h2>
+                    <div class="bg-white rounded-xl p-4">
+                        <div class="grid grid-cols-7 gap-1 mb-3">
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Du</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Se</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Cho</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Pa</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Ju</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Sha</div>
+                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Ya</div>
                         </div>
+                        <div id="calendar-dates" class="grid grid-cols-7 gap-1"></div>
                     </div>
                 </div>
 
                 <!-- Step 2: Time Selection (ko'rsatiladi kun tanlangandan keyin) -->
-                <div id="time-section" class="mb-8 fade-in-up" style="display: none; animation-delay: 0.6s">
-                    <div class="text-center mb-4">
-                        <div class="text-3xl mb-2">🕐</div>
-                        <h2 class="text-xl font-semibold mb-2 text-text-light">
-                            Vaqtni tanlang
-                        </h2>
-                        <p class="text-text-gray text-sm mb-6">
-                            <span id="selected-date-display">Tanlangan kun</span> uchun mavjud vaqtlar
-                        </p>
-                    </div>
-                    <div class="bg-secondary-dark rounded-xl p-4 glass-effect">
-                        <div id="time-slots" class="grid grid-cols-3 gap-3"></div>
-                    </div>
+                <div id="time-section" class="mb-6 fade-in-up" style="display: none; animation-delay: 0.3s">
+                    <h2 class="section-title">Vaqtni tanlang</h2>
+                    <p class="text-sm text-gray-500 mb-4">
+                        <span id="selected-date-display">Tanlangan kun</span> uchun mavjud vaqtlar
+                    </p>
+                    <div id="time-slots" class="grid grid-cols-3 gap-2"></div>
                 </div>
 
                 <!-- Selected Info -->
-                <div id="selected-info" class="glass-effect p-6 rounded-xl mb-6 fade-in-up" style="display: none; animation-delay: 0.8s">
+                <div id="selected-info" class="bg-white rounded-xl p-4 mb-6 fade-in-up" style="display: none; animation-delay: 0.4s; border: 1px solid var(--accent-gray);">
                     <div class="text-center">
-                        <div class="text-3xl mb-3">💫</div>
-                        <h3 class="font-bold text-lg mb-4 text-text-light">Tanlangan ma'lumotlar</h3>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-center text-text-light">
-                                <span class="text-gold mr-2">📅</span>
+                        <h3 class="font-semibold text-base mb-3" style="color: var(--text-dark);">Tanlangan ma'lumotlar</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center justify-center" style="color: var(--text-dark);">
                                 <span class="font-medium">Sana:</span>
-                                <span id="selected-date" class="ml-2 text-gold font-semibold"></span>
+                                <span id="selected-date" class="ml-2 font-semibold"></span>
                             </div>
-                            <div class="flex items-center justify-center text-text-light">
-                                <span class="text-gold mr-2">⏰</span>
+                            <div class="flex items-center justify-center" style="color: var(--text-dark);">
                                 <span class="font-medium">Vaqt:</span>
-                                <span id="selected-time" class="ml-2 text-gold font-semibold"></span>
+                                <span id="selected-time" class="ml-2 font-semibold"></span>
                             </div>
                         </div>
                     </div>
@@ -331,84 +381,50 @@
 
                 <!-- Confirm Button -->
                 <button id="confirm-btn"
-                    class="w-full btn-gold py-4 rounded-xl font-bold text-lg shine-effect fade-in-up"
-                    style="display: none; animation-delay: 1s">
-                    <div class="flex items-center justify-center">
-                        <span class="text-2xl mr-2">✨</span>
-                        Bron qilishni tasdiqlash
-                    </div>
+                    class="w-full py-4 rounded-xl font-semibold text-base fade-in-up"
+                    style="display: none; animation-delay: 0.5s; background: var(--accent-gray); color: var(--text-dark);">
+                    Bron qilishni tasdiqlash
                 </button>
 
                 <!-- Loading -->
-                <div id="loading" class="text-center py-12" style="display: none;">
-                    <div class="loading-spinner mx-auto mb-4"></div>
-                    <p class="text-text-light font-medium">Yuklanmoqda...</p>
-                </div>
-
-                <!-- Step 1: Date Selection (calendar eng oxirida) -->
-                <div id="date-section" class="mb-8 fade-in-up" style="animation-delay: 0.4s">
-                    <div class="text-center mb-4">
-                        <div class="inline-flex items-center">
-                            <div class="w-16 h-px bg-gradient-to-r from-transparent to-gold"></div>
-                            <span class="text-text-gray mx-4 text-sm font-medium">yoki</span>
-                            <div class="w-16 h-px bg-gradient-to-l from-transparent to-gold"></div>
-                        </div>
-                    </div>
-                    <h2 class="text-xl font-semibold mb-4 text-text-light flex items-center justify-center">
-                        <span class="text-2xl mr-2">📅</span>
-                        Boshqa kun tanlash
-                    </h2>
-                    <div class="bg-secondary-dark rounded-xl p-4 glass-effect">
-                        <div class="grid grid-cols-7 gap-1 mb-4">
-                            <div class="text-center text-xs font-semibold text-gold p-2">Du</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Se</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Cho</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Pa</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Ju</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Sha</div>
-                            <div class="text-center text-xs font-semibold text-gold p-2">Ya</div>
-                        </div>
-                        <div id="calendar-dates" class="grid grid-cols-7 gap-1"></div>
-                    </div>
+                <div id="loading" class="text-center py-8" style="display: none;">
+                    <div class="loading-spinner mx-auto mb-3"></div>
+                    <p style="color: var(--text-dark); font-weight: 500;">Yuklanmoqda...</p>
                 </div>
 
                 <!-- Admin Panel (hidden by default) -->
-                <div id="admin-panel" class="mb-8 fade-in-up" style="display: none;">
-                    <div class="glass-effect p-6 rounded-xl">
+                <div id="admin-panel" class="mb-6 fade-in-up" style="display: none;">
+                    <div class="bg-white p-6 rounded-xl" style="border: 1px solid var(--accent-gray);">
                         <div class="text-center mb-6">
-                            <div class="text-3xl mb-2">👨‍💼</div>
-                            <h2 class="text-xl font-semibold text-text-light mb-2">Admin Panel</h2>
-                            <p class="text-text-gray text-sm">Kundalik bronlar ro'yxati</p>
+                            <h2 class="text-xl font-semibold mb-2" style="color: var(--text-dark);">Admin Panel</h2>
+                            <p class="text-sm" style="color: var(--text-gray);">Kundalik bronlar ro'yxati</p>
                         </div>
 
                         <!-- Date selector for admin -->
                         <div class="mb-4">
-                            <label for="admin-date" class="block text-text-light font-medium mb-2">Sanani tanlang:</label>
-                            <input type="date" id="admin-date" class="w-full p-3 rounded-xl bg-secondary-dark border border-gold text-text-light focus:outline-none focus:ring-2 focus:ring-gold">
+                            <label for="admin-date" class="block font-medium mb-2" style="color: var(--text-dark);">Sanani tanlang:</label>
+                            <input type="date" id="admin-date" class="w-full p-3 rounded-xl bg-white border-2 focus:outline-none" style="border-color: var(--accent-gray); color: var(--text-dark);">
                         </div>
 
                         <!-- Bookings list -->
                         <div id="bookings-list" class="space-y-3">
-                            <div class="text-center text-text-gray py-8">
+                            <div class="text-center py-8" style="color: var(--text-gray);">
                                 Sanani tanlab, bronlarni ko'rish uchun "Bronlarni yuklash" tugmasini bosing
                             </div>
                         </div>
 
                         <!-- Action buttons -->
                         <div class="flex gap-3 mt-6">
-                            <button id="load-bookings-btn" class="flex-1 btn-gold py-3 rounded-xl font-medium">
-                                📊 Bronlarni yuklash
+                            <button id="load-bookings-btn" class="flex-1 py-3 rounded-xl font-medium" style="background: var(--accent-gray); color: var(--text-dark);">
+                                Bronlarni yuklash
                             </button>
-                            <button id="close-admin-btn" class="flex-1 btn-outline-gold py-3 rounded-xl font-medium">
-                                ❌ Yopish
+                            <button id="close-admin-btn" class="flex-1 py-3 rounded-xl font-medium border-2" style="background: white; color: var(--text-dark); border-color: var(--accent-gray);">
+                                Yopish
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Footer decoration -->
-            <div class="h-2 gold-gradient"></div>
         </div>
     </div>
 
