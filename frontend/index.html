@@ -41,6 +41,10 @@
             padding: 2rem;
             text-align: center;
             position: relative;
+            background: var(--accent-gray);
+            border-radius: 16px;
+            margin: 1.5rem;
+            margin-bottom: 0;
         }
 
         .verification-badge {
@@ -60,20 +64,26 @@
             width: 120px;
             height: 120px;
             margin: 0 auto 1rem;
+            background: transparent;
+        }
+
+        .barber-logo img {
+            background: transparent;
+            mix-blend-mode: darken;
         }
 
         .brand-title {
             font-size: 1.75rem;
             font-weight: 800;
             letter-spacing: 0.5px;
-            color: var(--text-dark);
+            color: #000000;
             margin-bottom: 0.25rem;
         }
 
         .brand-subtitle {
             font-size: 0.875rem;
             font-weight: 500;
-            color: var(--text-gray);
+            color: #1F2937;
         }
 
         .quick-select-buttons {
@@ -146,24 +156,26 @@
 
         .calendar-day {
             background: #FFFFFF;
-            border: 1px solid var(--accent-gray);
-            color: var(--text-dark);
+            border: 1px solid #D1D5DB;
+            color: #000000;
             padding: 0.75rem;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.2s ease;
             cursor: pointer;
         }
 
         .calendar-day:hover:not(.disabled) {
-            background: var(--accent-gray);
-            border-color: var(--accent-gray);
+            background: #FFFFFF;
+            border-color: #000000;
+            transform: scale(1.05);
         }
 
         .calendar-day.selected {
-            background: var(--accent-gray);
-            border-color: var(--accent-gray);
-            color: var(--text-dark);
+            background: #FFFFFF;
+            border-color: #000000;
+            color: #000000;
+            box-shadow: 0 0 0 2px #000000;
         }
 
         .calendar-day.disabled {
@@ -205,7 +217,7 @@
         .section-title {
             font-size: 1rem;
             font-weight: 600;
-            color: var(--text-dark);
+            color: #1F2937;
             margin-bottom: 1rem;
         }
 
@@ -280,37 +292,7 @@
 
                 <!-- Barber Logo -->
                 <div class="barber-logo">
-                    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Head outline -->
-                        <ellipse cx="100" cy="100" rx="60" ry="75" fill="#1a1a1a"/>
-                        <!-- Face -->
-                        <ellipse cx="100" cy="90" rx="50" ry="60" fill="#FFFFFF"/>
-                        <!-- Hair - swept back style -->
-                        <path d="M50 70 Q45 50, 60 45 Q70 42, 80 45 Q90 40, 100 38 Q110 40, 120 45 Q130 42, 140 45 Q155 50, 150 70 L140 75 Q130 65, 120 63 Q110 60, 100 60 Q90 60, 80 63 Q70 65, 60 75 Z" fill="#1a1a1a"/>
-                        <!-- Eyes -->
-                        <ellipse cx="85" cy="85" rx="3" ry="2" fill="#1a1a1a"/>
-                        <ellipse cx="115" cy="85" rx="3" ry="2" fill="#1a1a1a"/>
-                        <!-- Eyebrows -->
-                        <path d="M78 78 Q85 75, 92 78" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <path d="M108 78 Q115 75, 122 78" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <!-- Nose -->
-                        <path d="M100 95 L97 100 Q100 102, 103 100 Z" fill="#E5E7EB"/>
-                        <!-- Mustache - stylized curled -->
-                        <path d="M70 105 Q75 100, 85 102 Q95 104, 100 103 Q105 104, 115 102 Q125 100, 130 105 Q128 110, 122 108 Q115 106, 110 108 Q105 110, 100 109 Q95 110, 90 108 Q85 106, 78 108 Q72 110, 70 105 Z" fill="#1a1a1a"/>
-                        <!-- Mustache curls -->
-                        <path d="M70 105 Q65 103, 63 108 Q62 112, 67 113" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <path d="M130 105 Q135 103, 137 108 Q138 112, 133 113" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <!-- Beard - full stylized -->
-                        <path d="M75 115 Q72 130, 75 145 Q78 155, 85 160 Q92 165, 100 166 Q108 165, 115 160 Q122 155, 125 145 Q128 130, 125 115 Q120 118, 115 120 Q110 122, 105 123 Q100 124, 95 123 Q90 122, 85 120 Q80 118, 75 115 Z" fill="#1a1a1a"/>
-                        <!-- Beard texture lines -->
-                        <path d="M82 125 Q85 140, 88 150" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-                        <path d="M95 127 Q97 142, 98 155" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-                        <path d="M105 127 Q103 142, 102 155" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-                        <path d="M118 125 Q115 140, 112 150" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-                        <!-- Ears -->
-                        <ellipse cx="50" cy="95" rx="8" ry="12" fill="#FFFFFF"/>
-                        <ellipse cx="150" cy="95" rx="8" ry="12" fill="#FFFFFF"/>
-                    </svg>
+                    <img src="barber-logo.png" alt="Rustam Barber Logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
 
                 <h1 class="brand-title">RUSTAM BARBER</h1>
@@ -339,15 +321,15 @@
                 <!-- Step 1: Date Selection (calendar) -->
                 <div id="date-section" class="mb-6 fade-in-up" style="animation-delay: 0.2s">
                     <h2 class="section-title">Boshqa kun tanlash</h2>
-                    <div class="bg-white rounded-xl p-4">
+                    <div class="rounded-xl p-4" style="background: var(--accent-gray);">
                         <div class="grid grid-cols-7 gap-1 mb-3">
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Du</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Se</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Cho</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Pa</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Ju</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Sha</div>
-                            <div class="text-center text-xs font-semibold text-gray-500 p-2">Ya</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Du</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Se</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Cho</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Pa</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Ju</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Sha</div>
+                            <div class="text-center text-xs font-semibold p-2" style="color: #000000;">Ya</div>
                         </div>
                         <div id="calendar-dates" class="grid grid-cols-7 gap-1"></div>
                     </div>
