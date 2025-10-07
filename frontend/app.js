@@ -13,7 +13,8 @@ if (tg.themeParams) {
 // Global variables
 let selectedDate = null;
 let selectedTime = null;
-const API_BASE_URL = 'http://localhost:8000'; // Local API
+let selectedServices = [];
+const API_BASE_URL = 'https://4acbccaae01a.ngrok-free.app'; // Public API via ngrok
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupQuickDateButtons();
     setupAdminPanel();
+    setupServiceListeners();
 });
 
 // Generate calendar for current and next month
@@ -110,23 +112,38 @@ function selectDate(dateStr, element) {
     
     selectedDate = dateStr;
     selectedTime = null;
-    
+    selectedServices = [];
+
+    // Reset service checkboxes
+    document.querySelectorAll('.service-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+
     // Update UI
     const selectedDateEl = document.getElementById('selected-date');
     const selectedDateDisplayEl = document.getElementById('selected-date-display');
-    
+
     if (selectedDateEl) {
         selectedDateEl.textContent = formatDateForDisplay(dateStr);
     }
-    
+
     // Update time section date display
     if (selectedDateDisplayEl) {
         selectedDateDisplayEl.textContent = formatDateForDisplay(dateStr);
     }
-    
-    // Show time selection and load available times
-    loadAvailableTimes(dateStr);
-    showTimeSection();
+
+    // Show service selection section
+    showServiceSection();
+
+    // Hide time section until services are selected
+    const timeSection = document.getElementById('time-section');
+    if (timeSection) {
+        timeSection.style.display = 'none';
+    }
+
+    // Hide selected info and confirm button
+    hideSelectedInfo();
+    hideConfirmButton();
 }
 
 // Format date for display
@@ -142,25 +159,25 @@ function formatDateForDisplay(dateStr) {
 }
 
 // Load available times for selected date
-async function loadAvailableTimes(date) {
+async function loadAvailableTimes(date, duration = 1) {
     const loading = document.getElementById('loading');
     const timeSlots = document.getElementById('time-slots');
-    
+
     loading.style.display = 'block';
     timeSlots.innerHTML = '';
-    
+
     try {
-        const response = await fetch(`${API_BASE_URL}/available-times/${date}`, {
+        const response = await fetch(`${API_BASE_URL}/available-times/${date}?duration=${duration}`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('API Response:', data);
         console.log('Available times:', data.available_times);
@@ -181,14 +198,14 @@ async function loadAvailableTimes(date) {
             timeSlots.innerHTML = `
                 <div class="col-span-3 text-center p-6">
                     <p style="color: var(--text-dark); font-weight: 500;">Bu kun uchun mavjud vaqt yo'q</p>
-                    <p class="text-sm mt-1" style="color: var(--text-gray);">Boshqa kun tanlang</p>
+                    <p class="text-sm mt-1" style="color: var(--text-gray);">Boshqa kun yoki xizmat tanlang</p>
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error loading times:', error);
-        console.error('API URL:', `${API_BASE_URL}/available-times/${date}`);
-        
+        console.error('API URL:', `${API_BASE_URL}/available-times/${date}?duration=${duration}`);
+
         let errorMessage = 'Xatolik yuz berdi';
         if (error.message.includes('Failed to fetch')) {
             errorMessage = 'Serverga ulanib bo\'lmadi. Internet aloqasini tekshiring.';
@@ -197,14 +214,14 @@ async function loadAvailableTimes(date) {
         } else if (error.message.includes('404')) {
             errorMessage = 'API topilmadi. URL ni tekshiring.';
         }
-        
+
         timeSlots.innerHTML = `
             <div class="col-span-3 text-center p-6">
                 <p class="text-red-500 font-medium">${errorMessage}</p>
                 <p class="text-sm mt-1" style="color: var(--text-gray);">Iltimos, qayta urinib ko'ring</p>
             </div>
         `;
-        
+
         // Show error in Telegram if available
         if (tg && tg.showAlert) {
             tg.showAlert(`Xatolik: ${error.message}`);
@@ -220,21 +237,43 @@ function selectTime(time, element) {
     document.querySelectorAll('#time-slots button').forEach(btn => {
         btn.classList.remove('selected');
     });
-    
+
     // Add selection to clicked element
     element.classList.add('selected');
-    
+
     selectedTime = time;
-    
-    // Update UI with animation
-    document.getElementById('selected-time').textContent = time;
-    
+
+    // Calculate end time based on total duration
+    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+    const startHour = parseInt(time.split(':')[0]);
+    const endHour = startHour + totalDuration;
+    const endTime = `${endHour.toString().padStart(2, '0')}:00`;
+    const timeRange = `${time} - ${endTime}`;
+
+    // Update UI with time range
+    document.getElementById('selected-time').textContent = timeRange;
+
     showSelectedInfo();
     showConfirmButton();
-    
+
     // Add success haptic feedback
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
+}
+
+// Show service section
+function showServiceSection() {
+    const serviceSection = document.getElementById('service-section');
+    if (serviceSection) {
+        serviceSection.style.display = 'block';
+        // Smooth scroll to service section
+        setTimeout(() => {
+            serviceSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+        }, 100);
     }
 }
 
@@ -245,9 +284,9 @@ function showTimeSection() {
         timeSection.style.display = 'block';
         // Smooth scroll to time section
         setTimeout(() => {
-            timeSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
+            timeSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
             });
         }, 100);
     }
@@ -258,13 +297,22 @@ function showSelectedInfo() {
     const selectedInfo = document.getElementById('selected-info');
     if (selectedInfo) {
         selectedInfo.style.display = 'block';
+        updateSelectedServicesDisplay();
         // Smooth scroll to selected info
         setTimeout(() => {
-            selectedInfo.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
+            selectedInfo.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
             });
         }, 200);
+    }
+}
+
+// Hide selected info
+function hideSelectedInfo() {
+    const selectedInfo = document.getElementById('selected-info');
+    if (selectedInfo) {
+        selectedInfo.style.display = 'none';
     }
 }
 
@@ -275,11 +323,19 @@ function showConfirmButton() {
         confirmBtn.style.display = 'block';
         // Smooth scroll to confirm button
         setTimeout(() => {
-            confirmBtn.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
+            confirmBtn.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
             });
         }, 400);
+    }
+}
+
+// Hide confirm button
+function hideConfirmButton() {
+    const confirmBtn = document.getElementById('confirm-btn');
+    if (confirmBtn) {
+        confirmBtn.style.display = 'none';
     }
 }
 
@@ -312,30 +368,129 @@ function selectQuickDate(dateStr, displayText) {
     document.querySelectorAll('[data-date]').forEach(el => {
         el.classList.remove('selected');
     });
-    
+
     selectedDate = dateStr;
     selectedTime = null;
-    
+    selectedServices = [];
+
+    // Reset service checkboxes
+    document.querySelectorAll('.service-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+
     // Update UI
     const selectedDateEl = document.getElementById('selected-date');
     const selectedDateDisplayEl = document.getElementById('selected-date-display');
-    
+
     if (selectedDateEl) {
         selectedDateEl.textContent = displayText + ' (' + formatDateForDisplay(dateStr) + ')';
     }
-    
+
     // Update time section date display
     if (selectedDateDisplayEl) {
         selectedDateDisplayEl.textContent = displayText + ' (' + formatDateForDisplay(dateStr) + ')';
     }
-    
-    // Load available times and show time section
-    loadAvailableTimes(dateStr);
-    showTimeSection();
-    
+
+    // Show service selection section
+    showServiceSection();
+
+    // Hide time section until services are selected
+    const timeSection = document.getElementById('time-section');
+    if (timeSection) {
+        timeSection.style.display = 'none';
+    }
+
+    // Hide selected info and confirm button
+    hideSelectedInfo();
+    hideConfirmButton();
+
     // Add haptic feedback
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
+}
+
+// Setup service listeners
+function setupServiceListeners() {
+    const checkboxes = document.querySelectorAll('.service-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', handleServiceSelection);
+    });
+}
+
+// Handle service selection
+function handleServiceSelection() {
+    // Get all checked services
+    const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
+    selectedServices = [];
+
+    checkedBoxes.forEach(checkbox => {
+        selectedServices.push({
+            name: checkbox.closest('label').querySelector('.font-semibold').textContent,
+            service: checkbox.dataset.service,
+            price: parseInt(checkbox.dataset.price),
+            duration: parseInt(checkbox.dataset.duration)
+        });
+    });
+
+    // If at least one service is selected, load available times
+    if (selectedServices.length > 0) {
+        const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+        loadAvailableTimes(selectedDate, totalDuration);
+        showTimeSection();
+    } else {
+        // Hide time section if no services selected
+        const timeSection = document.getElementById('time-section');
+        if (timeSection) {
+            timeSection.style.display = 'none';
+        }
+        hideSelectedInfo();
+        hideConfirmButton();
+    }
+
+    // Add haptic feedback
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
+}
+
+// Update selected services display
+function updateSelectedServicesDisplay() {
+    const servicesDisplay = document.getElementById('selected-services-display');
+    const servicesList = document.getElementById('services-list');
+    const totalDurationEl = document.getElementById('total-duration');
+    const totalPriceEl = document.getElementById('total-price');
+
+    if (!servicesDisplay || !servicesList) return;
+
+    if (selectedServices.length > 0) {
+        servicesDisplay.style.display = 'block';
+
+        // Display services list
+        let servicesHtml = '';
+        selectedServices.forEach(service => {
+            servicesHtml += `
+                <div class="flex justify-between text-sm" style="color: var(--text-dark);">
+                    <span>${service.name}</span>
+                    <span>${service.price.toLocaleString()} so'm</span>
+                </div>
+            `;
+        });
+        servicesList.innerHTML = servicesHtml;
+
+        // Calculate and display totals
+        const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+        const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
+
+        if (totalDurationEl) {
+            totalDurationEl.textContent = `${totalDuration} soat`;
+        }
+
+        if (totalPriceEl) {
+            totalPriceEl.textContent = `${totalPrice.toLocaleString()} so'm`;
+        }
+    } else {
+        servicesDisplay.style.display = 'none';
     }
 }
 
@@ -352,9 +507,20 @@ function confirmBooking() {
         return;
     }
 
+    if (selectedServices.length === 0) {
+        tg.showAlert('Iltimos, kamida bitta xizmat tanlang!');
+        return;
+    }
+
+    const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
+    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+
     const bookingData = {
         date: selectedDate,
-        time: selectedTime
+        time: selectedTime,
+        services: selectedServices,
+        total_price: totalPrice,
+        total_duration: totalDuration
     };
 
     // Send data to Telegram bot
