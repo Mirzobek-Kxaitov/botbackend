@@ -13,7 +13,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-WEBAPP_URL = "https://mirzobek-kxaitov.github.io/botfront/"  # Bu URL frontendni deploy qilgandan keyin o'zgartiriladi
+WEBAPP_URL = "https://barberlocal.uz"  # Bu URL frontendni deploy qilgandan keyin o'zgartiriladi
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
