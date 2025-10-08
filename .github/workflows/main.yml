@@ -25,7 +25,12 @@ jobs:
           echo "Connecting to server and deploying latest changes..."
 
           sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "
+            cd /root/botbackend && \
             echo 'Pulling latest changes...' && \
-            git clone git@github.com:Mirzobek-Kxaitov/botbackend.git
+            git fetch --all && \
+            git reset --hard origin/main && \
+            echo 'Restarting services...' && \
+            sudo systemctl restart bot && \
+            sudo systemctl restart api && \
             echo 'Deployment completed successfully.'
           "
