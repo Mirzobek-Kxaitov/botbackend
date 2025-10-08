@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import get_db, Booking, create_tables
@@ -89,6 +90,22 @@ async def get_bookings(date: str, db: Session = Depends(get_db)):
         )
         for booking in bookings
     ]
+
+@app.get("/test-html", response_class=HTMLResponse)
+async def test_html():
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <title>Test Page</title>
+        </head>
+        <body>
+            <h1>Hello World</h1>
+            <p>FastAPI orqali HTML sahifa ishladi!</p>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 if __name__ == "__main__":
     import uvicorn
