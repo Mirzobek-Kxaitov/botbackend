@@ -14,7 +14,26 @@ if (tg.themeParams) {
 let selectedDate = null;
 let selectedTime = null;
 let selectedServices = [];
-const API_BASE_URL = 'https://4acbccaae01a.ngrok-free.app'; // Public API via ngrok
+const API_BASE_URL = 'https://3a462b7c73d5.ngrok-free.app'; // Backend via ngrok
+
+// Helper function for fetch with ngrok headers
+async function fetchAPI(url, options = {}) {
+    const defaultHeaders = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'Cache-Control': 'no-cache'
+    };
+
+    const mergedOptions = {
+        ...options,
+        headers: {
+            ...defaultHeaders,
+            ...options.headers
+        }
+    };
+
+    return fetch(url, mergedOptions);
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -167,12 +186,7 @@ async function loadAvailableTimes(date, duration = 1) {
     timeSlots.innerHTML = '';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/available-times/${date}?duration=${duration}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
-            }
-        });
+        const response = await fetchAPI(`${API_BASE_URL}/available-times/${date}?duration=${duration}`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
