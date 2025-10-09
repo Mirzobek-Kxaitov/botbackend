@@ -154,7 +154,7 @@ function selectDate(dateStr, element) {
     // Show service selection section
     showServiceSection();
 
-    // Hide other sections
+    // Hide other sections until service is selected
     document.getElementById('time-section').style.display = 'none';
 
     // Hide selected info and confirm button
@@ -405,7 +405,7 @@ function selectQuickDate(dateStr, displayText) {
     // Show service selection section
     showServiceSection();
 
-    // Hide other sections
+    // Hide other sections until service is selected
     document.getElementById('time-section').style.display = 'none';
 
     // Hide selected info and confirm button
@@ -443,13 +443,12 @@ function handleServiceSelection() {
 
     // If at least one service is selected, load available times
     if (selectedServices.length > 0) {
-        const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
-        loadAvailableTimes(selectedDate, totalDuration);
         // Agar sana tanlangan bo'lsa, vaqtlarni yuklash
         if (selectedDate) {
+        const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
             loadAvailableTimes(selectedDate, totalDuration);
+            showTimeSection();
         }
-        showTimeSection();
     } else {
         // Hide time section if no services selected
         const timeSection = document.getElementById('time-section');
