@@ -13,8 +13,8 @@ if (tg.themeParams) {
 // Global variables
 let selectedDate = null;
 let selectedTime = null;
-let selectedServices = [];
-const API_BASE_URL = 'https://3a462b7c73d5.ngrok-free.app'; // Backend via ngrok
+let selectedServices = []; // Tanlangan xizmatlar
+const API_BASE_URL = 'https://984156b4b0e4.ngrok-free.app'; // Backend API manzili (ngrok orqali)
 
 // Helper function for fetch with ngrok headers
 async function fetchAPI(url, options = {}) {
@@ -511,6 +511,10 @@ function updateSelectedServicesDisplay() {
 // Setup event listeners
 function setupEventListeners() {
     const confirmBtn = document.getElementById('confirm-btn');
+    if (!confirmBtn) {
+        console.error("Confirm button not found!");
+        return;
+    }
     confirmBtn.addEventListener('click', confirmBooking);
 }
 
@@ -537,8 +541,9 @@ function confirmBooking() {
         total_duration: totalDuration
     };
 
-    // Send data to Telegram bot
-    tg.sendData(JSON.stringify(bookingData));
+    // Ma'lumotlarni JSON formatida Telegram botga yuborish
+    // Bu ma'lumotlar bot.py dagi web_app_data handleriga boradi
+    window.Telegram.WebApp.sendData(JSON.stringify(bookingData));
 }
 
 // Admin panel functionality
