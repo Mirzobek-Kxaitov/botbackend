@@ -14,7 +14,7 @@ if (tg.themeParams) {
 let selectedDate = null;
 let selectedTime = null;
 let selectedServices = []; // Tanlangan xizmatlar
-const API_BASE_URL = 'https://984156b4b0e4.ngrok-free.app'; // Backend API manzili (ngrok orqali)
+const API_BASE_URL = 'http://localhost:8000'; // Backend API manzili (lokal server)
 
 // Helper function for fetch with ngrok headers
 async function fetchAPI(url, options = {}) {
@@ -516,14 +516,14 @@ function setupEventListeners() {
 }
 
 // Confirm booking
-function confirmBooking() {
+async function confirmBooking() {
     if (!selectedDate || !selectedTime) {
-        tg.showAlert('Iltimos, sana va vaqtni tanlang!');
+        alert('Iltimos, sana va vaqtni tanlang!');
         return;
     }
 
     if (selectedServices.length === 0) {
-        tg.showAlert('Iltimos, kamida bitta xizmat tanlang!');
+        alert('Iltimos, kamida bitta xizmat tanlang!');
         return;
     }
 
@@ -533,14 +533,43 @@ function confirmBooking() {
     const bookingData = {
         date: selectedDate,
         time: selectedTime,
+        user_telegram_id: "test_user_" + Date.now(),
+        user_name: "Test User",
+        user_phone: "+998901234567",
         services: selectedServices,
         total_price: totalPrice,
         total_duration: totalDuration
     };
 
-    // Ma'lumotlarni JSON formatida Telegram botga yuborish
-    // Bu ma'lumotlar bot.py dagi web_app_data handleriga boradi
-    window.Telegram.WebApp.sendData(JSON.stringify(bookingData));
+    // Lokal test uchun to'g'ridan API'ga yuborish
+    try {
+        const confirmBtn = document.getElementById('confirm-btn');
+        confirmBtn.textContent = 'Yuklanmoqda...';
+        confirmBtn.disabled = true;
+
+        const response = await fetchAPI(`${API_BASE_URL}/bookings`, {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert('✅ Bron muvaffaqiyatli yaratildi!\n\nBron ID: #' + result.booking.id);
+
+            // Reset form
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('❌ Xatolik: ' + error.detail);
+        }
+    } catch (error) {
+        console.error('Bron qilishda xatolik:', error);
+        alert('❌ Xatolik yuz berdi: ' + error.message);
+    } finally {
+        const confirmBtn = document.getElementById('confirm-btn');
+        confirmBtn.textContent = 'Bron qilishni tasdiqlash';
+        confirmBtn.disabled = false;
+    }
 }
 
 // Admin panel functionality
