@@ -516,14 +516,22 @@ function setupEventListeners() {
 }
 
 // Confirm booking
-async function confirmBooking() {
+function confirmBooking() {
     if (!selectedDate || !selectedTime) {
-        alert('Iltimos, sana va vaqtni tanlang!');
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.showAlert('Iltimos, sana va vaqtni tanlang!');
+        } else {
+            alert('Iltimos, sana va vaqtni tanlang!');
+        }
         return;
     }
 
     if (selectedServices.length === 0) {
-        alert('Iltimos, kamida bitta xizmat tanlang!');
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.showAlert('Iltimos, kamida bitta xizmat tanlang!');
+        } else {
+            alert('Iltimos, kamida bitta xizmat tanlang!');
+        }
         return;
     }
 
@@ -533,42 +541,17 @@ async function confirmBooking() {
     const bookingData = {
         date: selectedDate,
         time: selectedTime,
-        user_telegram_id: "test_user_" + Date.now(),
-        user_name: "Test User",
-        user_phone: "+998901234567",
         services: selectedServices,
         total_price: totalPrice,
         total_duration: totalDuration
     };
 
-    // Lokal test uchun to'g'ridan API'ga yuborish
-    try {
-        const confirmBtn = document.getElementById('confirm-btn');
-        confirmBtn.textContent = 'Yuklanmoqda...';
-        confirmBtn.disabled = true;
-
-        const response = await fetchAPI(`${API_BASE_URL}/bookings`, {
-            method: 'POST',
-            body: JSON.stringify(bookingData)
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            alert('✅ Bron muvaffaqiyatli yaratildi!\n\nBron ID: #' + result.booking.id);
-
-            // Reset form
-            location.reload();
-        } else {
-            const error = await response.json();
-            alert('❌ Xatolik: ' + error.detail);
-        }
-    } catch (error) {
-        console.error('Bron qilishda xatolik:', error);
-        alert('❌ Xatolik yuz berdi: ' + error.message);
-    } finally {
-        const confirmBtn = document.getElementById('confirm-btn');
-        confirmBtn.textContent = 'Bron qilishni tasdiqlash';
-        confirmBtn.disabled = false;
+    // Ma'lumotlarni Telegram botga yuborish
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.sendData(JSON.stringify(bookingData));
+    } else {
+        // Lokal test uchun fallback
+        alert('✅ Bron ma\'lumotlari tayyor!\n\n' + JSON.stringify(bookingData, null, 2));
     }
 }
 
