@@ -547,10 +547,16 @@ function confirmBooking() {
     };
 
     // Ma'lumotlarni Telegram botga yuborish
+    console.log('Booking data:', bookingData);
+    console.log('Telegram WebApp:', window.Telegram);
+
     if (window.Telegram && window.Telegram.WebApp) {
+        console.log('Sending data to Telegram bot...');
         window.Telegram.WebApp.sendData(JSON.stringify(bookingData));
+        console.log('Data sent!');
     } else {
         // Lokal test uchun fallback
+        console.log('Telegram WebApp not available');
         alert('✅ Bron ma\'lumotlari tayyor!\n\n' + JSON.stringify(bookingData, null, 2));
     }
 }
