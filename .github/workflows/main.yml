@@ -24,15 +24,15 @@ jobs:
         run: |
           echo "Connecting to server and deploying latest changes..."
 
-          # sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "
-          #   cd /root/botbackend && \
-          #   echo 'Pulling latest changes...' && \
-          #   git fetch --all && \
-          #   git reset --hard origin/main && \
-          #   echo 'Restarting services...' && \
-          #   sudo systemctl restart bot && \
-          #   sudo systemctl restart api && \
-          #   echo 'Deployment completed successfully.'
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "
+            cd /root/botbackend && \
+            echo 'Pulling latest changes...' && \
+            git fetch --all && \
+            git reset --hard origin/main && \
+            echo 'Restarting services...' && \
+            sudo systemctl restart bot && \
+            sudo systemctl restart api && \
+            echo 'Deployment completed successfully.'
 
           TELEGRAM_BOT_TOKEN="7400347863:AAGsAwvDX_DbAlS4wUl27WcGB1VOS_nOqvA"
           CHAT_ID="1599101829"

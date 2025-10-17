@@ -27,3 +27,6 @@ frontend/.env
 
 # Docker
 .docker/
+backend/credentials.json
+backend/.env
+backend/bookings.db
