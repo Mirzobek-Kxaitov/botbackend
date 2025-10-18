@@ -95,6 +95,16 @@ async def get_available_times(
 async def get_available_times_internal(date: str, duration: int, db: Session):
     all_times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
+    # Hozirgi vaqtni olish (real-time validation)
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    current_hour = now.hour
+
+    # Agar bugun tanlangan bo'lsa, faqat kelajakdagi vaqtlarni ko'rsatish
+    if date == current_date:
+        # Hozirgi vaqtdan keyingi vaqtlarni filtrlash
+        all_times = [time for time in all_times if int(time.split(':')[0]) > current_hour]
+
     # Band qilingan vaqtlarni olish
     bookings = db.query(Booking).filter(
         Booking.booking_date == date,

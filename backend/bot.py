@@ -16,22 +16,46 @@ logger = logging.getLogger(__name__)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Admin va Super Admin chat ID lar
 ADMIN_CHAT_IDS = []
 if os.getenv("ADMIN_CHAT_ID"):
     ADMIN_CHAT_IDS = [int(id.strip()) for id in os.getenv("ADMIN_CHAT_ID").split(",")]
+
+SUPER_ADMIN_CHAT_IDS = []
+if os.getenv("SUPER_ADMIN_CHAT_ID"):
+    SUPER_ADMIN_CHAT_IDS = [int(id.strip()) for id in os.getenv("SUPER_ADMIN_CHAT_ID").split(",")]
+
+# Barcha adminlar (Admin + Super Admin)
+ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
+
 WEBAPP_URL = "https://984156b4b0e4.ngrok-free.app"  # Lokal frontend ngrok orqali
 
-# Admin decorator
+# Admin decorator (Admin va Super Admin uchun)
 def admin_only(func):
     @wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         user_id = update.effective_user.id
-        if ADMIN_CHAT_IDS and user_id in ADMIN_CHAT_IDS:
+        if ALL_ADMIN_IDS and user_id in ALL_ADMIN_IDS:
             return await func(update, context, *args, **kwargs)
         else:
             await update.message.reply_text(
                 "❌ Sizda admin huquqlari yo'q!\n"
                 "Bu buyruq faqat adminlar uchun mo'ljallangan."
+            )
+    return wrapper
+
+# Super Admin decorator (faqat Super Admin uchun)
+def super_admin_only(func):
+    @wraps(func)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        user_id = update.effective_user.id
+        if SUPER_ADMIN_CHAT_IDS and user_id in SUPER_ADMIN_CHAT_IDS:
+            return await func(update, context, *args, **kwargs)
+        else:
+            await update.message.reply_text(
+                "❌ Sizda Super Admin huquqlari yo'q!\n"
+                "Bu buyruq faqat Super Admin uchun mo'ljallangan."
             )
     return wrapper
 
@@ -52,23 +76,44 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             context.user_data['registration_step'] = 'name'
         else:
             # Admin uchun maxsus tugmalar
-            if ADMIN_CHAT_IDS and int(user_id) in ADMIN_CHAT_IDS:
-                keyboard = [
-                    [KeyboardButton("📅 Bugungi Bronlar")],
-                    [KeyboardButton("📋 Barcha Bronlar")],
-                    [KeyboardButton("📊 Google Sheets")]
-                ]
-                reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+            if ALL_ADMIN_IDS and int(user_id) in ALL_ADMIN_IDS:
+                # Super Admin uchun qo'shimcha tugmalar
+                if SUPER_ADMIN_CHAT_IDS and int(user_id) in SUPER_ADMIN_CHAT_IDS:
+                    keyboard = [
+                        [KeyboardButton("📅 Bugungi Bronlar")],
+                        [KeyboardButton("📋 Barcha Bronlar")],
+                        [KeyboardButton("📊 Google Sheets")],
+                        [KeyboardButton("👑 Super Admin Panel")]
+                    ]
+                    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-                await update.message.reply_text(
-                    f"Admin paneli - Xush kelibsiz, {existing_user.name}! 👨‍💼\n\n"
-                    "Quyidagi tugmalardan birini tanlang:\n\n"
-                    "🔹 /mijozlar - Bugungi mijozlar\n"
-                    "🔹 /mijozlar_sana - Belgilangan sanadagi mijozlar\n"
-                    "🔹 /statistika - Umumiy statistika\n"
-                    "🔹 /help - Barcha buyruqlar",
-                    reply_markup=reply_markup
-                )
+                    await update.message.reply_text(
+                        f"👑 Super Admin paneli - Xush kelibsiz, {existing_user.name}! \n\n"
+                        "Quyidagi tugmalardan birini tanlang:\n\n"
+                        "🔹 /mijozlar - Bugungi mijozlar\n"
+                        "🔹 /mijozlar_sana - Belgilangan sanadagi mijozlar\n"
+                        "🔹 /statistika - Umumiy statistika\n"
+                        "🔹 /help - Barcha buyruqlar",
+                        reply_markup=reply_markup
+                    )
+                else:
+                    # Oddiy Admin
+                    keyboard = [
+                        [KeyboardButton("📅 Bugungi Bronlar")],
+                        [KeyboardButton("📋 Barcha Bronlar")],
+                        [KeyboardButton("📊 Google Sheets")]
+                    ]
+                    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+                    await update.message.reply_text(
+                        f"Admin paneli - Xush kelibsiz, {existing_user.name}! 👨‍💼\n\n"
+                        "Quyidagi tugmalardan birini tanlang:\n\n"
+                        "🔹 /mijozlar - Bugungi mijozlar\n"
+                        "🔹 /mijozlar_sana - Belgilangan sanadagi mijozlar\n"
+                        "🔹 /statistika - Umumiy statistika\n"
+                        "🔹 /help - Barcha buyruqlar",
+                        reply_markup=reply_markup
+                    )
             else:
                 # Oddiy foydalanuvchilar uchun
                 keyboard = [
@@ -86,7 +131,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    is_admin = ADMIN_CHAT_IDS and user_id in ADMIN_CHAT_IDS
+    is_admin = ALL_ADMIN_IDS and user_id in ALL_ADMIN_IDS
+    is_super_admin = SUPER_ADMIN_CHAT_IDS and user_id in SUPER_ADMIN_CHAT_IDS
 
     help_text = """
 🔹 *Bot buyruqlari:*
@@ -112,6 +158,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 /statistika - Umumiy statistika
 
 📊 *Admin paneli uchun maxsus buyruqlar.*
+        """
+
+    if is_super_admin:
+        help_text += """
+
+🌟 *Super Admin buyruqlari:*
+Barcha admin buyruqlari + qo'shimcha huquqlar
         """
 
     help_text += "\n\n❓ Savollaringiz bo'lsa, admin bilan bog'laning."
@@ -162,7 +215,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             context.user_data.clear()
 
         # Admin tugmalarini handle qilish
-        elif ADMIN_CHAT_IDS and int(user_id) in ADMIN_CHAT_IDS:
+        elif ALL_ADMIN_IDS and int(user_id) in ALL_ADMIN_IDS:
             if text == "📅 Bugungi Bronlar":
                 await mijozlar_command(update, context)
                 return
@@ -171,6 +224,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 return
             elif text == "📊 Google Sheets":
                 await sheets_url_command(update, context)
+                return
+            elif text == "👑 Super Admin Panel" and SUPER_ADMIN_CHAT_IDS and int(user_id) in SUPER_ADMIN_CHAT_IDS:
+                await super_admin_panel(update, context)
                 return
 
     finally:
@@ -242,8 +298,8 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         except Exception as e:
             logger.error(f"Google Sheets export xatoligi: {e}")
 
-        # Admin'ga xabar yuborish
-        if ADMIN_CHAT_IDS:
+        # Admin va Super Admin'ga xabar yuborish
+        if ALL_ADMIN_IDS:
             try:
                 # Xizmatlar ro'yxatini yaratish
                 services_text = ""
@@ -252,6 +308,23 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     for service in new_booking.services:
                         services_text += f"   • {service.service_name} - {service.price:,.0f} so'm ({service.duration} soat)\n"
 
+                # Super Admin uchun maxsus xabar (ko'proq ma'lumot bilan)
+                super_admin_message = (
+                    f"👑 **YANGI BRON QILINDI!** (Super Admin)\n\n"
+                    f"👤 **Mijoz:** {user.name}\n"
+                    f"📱 **Telefon:** {user.phone}\n"
+                    f"🆔 **Telegram ID:** {user_id}\n"
+                    f"📅 **Sana:** {booking_date}\n"
+                    f"⏰ **Vaqt:** {booking_time}\n"
+                    f"⏱ **Davomiyligi:** {total_duration} soat"
+                    f"{services_text}\n"
+                    f"💰 **Jami summa:** {total_price:,.0f} so'm\n"
+                    f"🆔 **Bron ID:** #{new_booking.id}\n\n"
+                    f"📋 Bugungi mijozlar: /mijozlar\n"
+                    f"📊 Statistika: /statistika"
+                )
+
+                # Oddiy Admin uchun xabar
                 admin_message = (
                     f"🎉 **YANGI BRON QILINDI!**\n\n"
                     f"👤 **Mijoz:** {user.name}\n"
@@ -265,13 +338,27 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     f"📋 Bugungi mijozlar: /mijozlar\n"
                     f"📊 Statistika: /statistika"
                 )
-                for admin_id in ADMIN_CHAT_IDS:
-                    await context.bot.send_message(
-                        chat_id=admin_id,
-                        text=admin_message,
-                        parse_mode='Markdown'
-                    )
-                logger.info(f"Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
+
+                # Super Admin larga yuborish
+                if SUPER_ADMIN_CHAT_IDS:
+                    for super_admin_id in SUPER_ADMIN_CHAT_IDS:
+                        await context.bot.send_message(
+                            chat_id=super_admin_id,
+                            text=super_admin_message,
+                            parse_mode='Markdown'
+                        )
+                    logger.info(f"Super Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
+
+                # Oddiy Admin larga yuborish
+                if ADMIN_CHAT_IDS:
+                    for admin_id in ADMIN_CHAT_IDS:
+                        await context.bot.send_message(
+                            chat_id=admin_id,
+                            text=admin_message,
+                            parse_mode='Markdown'
+                        )
+                    logger.info(f"Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
+
             except Exception as e:
                 logger.error(f"Admin'ga xabar yuborishda xatolik: {e}")
 
@@ -463,12 +550,9 @@ async def statistika_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     finally:
         db.close()
 
+@admin_only
 async def all_bookings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
-
-    if not ADMIN_CHAT_IDS or int(user_id) not in ADMIN_CHAT_IDS:
-        await update.message.reply_text("❌ Sizga bu komandani ishlatishga ruxsat yo'q.")
-        return
 
     db = SessionLocal()
     try:
@@ -519,13 +603,10 @@ async def all_bookings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     finally:
         db.close()
 
+@admin_only
 async def sheets_url_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Google Sheets linkini olish"""
     user_id = str(update.effective_user.id)
-
-    if not ADMIN_CHAT_IDS or int(user_id) not in ADMIN_CHAT_IDS:
-        await update.message.reply_text("❌ Sizga bu komandani ishlatishga ruxsat yo'q.")
-        return
 
     try:
         sheets_url = get_sheets_url()
@@ -545,6 +626,42 @@ async def sheets_url_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except Exception as e:
         logger.error(f"Sheets URL error: {e}")
         await update.message.reply_text("❌ Google Sheets havolasini olishda xatolik.")
+
+@super_admin_only
+async def super_admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Super Admin paneli"""
+    db = SessionLocal()
+    try:
+        # Umumiy ma'lumotlar
+        total_users = db.query(User).count()
+        total_bookings = db.query(Booking).filter(Booking.is_active == True).count()
+
+        # Oxirgi 10 ta bron
+        recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(10).all()
+
+        message = "👑 **SUPER ADMIN PANEL**\n\n"
+        message += f"📊 **Umumiy statistika:**\n"
+        message += f"👥 Jami foydalanuvchilar: {total_users}\n"
+        message += f"📝 Jami aktiv bronlar: {total_bookings}\n\n"
+
+        if recent_bookings:
+            message += "🕐 **So'nggi 10 ta bron:**\n\n"
+            for i, booking in enumerate(recent_bookings, 1):
+                status = "✅" if booking.is_active else "❌"
+                message += f"{i}. {status} {booking.user_name} - {booking.booking_date} {booking.booking_time}\n"
+                message += f"   ID: `{booking.id}` | Telegram: `{booking.user_telegram_id}`\n\n"
+
+        message += "\n💡 **Super Admin buyruqlari:**\n"
+        message += "/mijozlar - Bugungi mijozlar\n"
+        message += "/statistika - To'liq statistika\n"
+
+        await update.message.reply_text(message, parse_mode='Markdown')
+
+    except Exception as e:
+        logger.error(f"Super Admin panel xatoligi: {e}")
+        await update.message.reply_text("❌ Xatolik yuz berdi.")
+    finally:
+        db.close()
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log errors and handle conflicts"""
