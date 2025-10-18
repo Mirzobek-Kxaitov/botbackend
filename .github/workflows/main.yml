@@ -29,9 +29,11 @@ jobs:
             echo 'Pulling latest changes...' && \
             git fetch --all && \
             git reset --hard origin/main && \
+            cp -r /root/botbackend/frontend/ /var/www/ \
             echo 'Restarting services...' && \
             sudo systemctl restart bot && \
             sudo systemctl restart api && \
+            sudo systemctl reload nginx && \            
             echo 'Deployment completed successfully.'
 
           TELEGRAM_BOT_TOKEN="7400347863:AAGsAwvDX_DbAlS4wUl27WcGB1VOS_nOqvA"
