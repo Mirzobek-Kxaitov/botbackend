@@ -53,7 +53,18 @@ class BookingResponse(BaseModel):
     services: List[ServiceResponse] = []
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+
+# Admin va Super Admin chat ID lar
+ADMIN_CHAT_IDS = []
+if os.getenv("ADMIN_CHAT_ID"):
+    ADMIN_CHAT_IDS = [id.strip() for id in os.getenv("ADMIN_CHAT_ID").split(",")]
+
+SUPER_ADMIN_CHAT_IDS = []
+if os.getenv("SUPER_ADMIN_CHAT_ID"):
+    SUPER_ADMIN_CHAT_IDS = [id.strip() for id in os.getenv("SUPER_ADMIN_CHAT_ID").split(",")]
+
+# Barcha adminlar (Admin + Super Admin)
+ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
 
 @app.on_event("startup")
 async def startup():
@@ -167,8 +178,8 @@ async def get_bookings(date: str, db: Session = Depends(get_db)):
     ]
 
 async def send_admin_notification(booking: Booking):
-    """Adminga yangi bron haqida xabar yuborish"""
-    if not BOT_TOKEN or not ADMIN_CHAT_ID:
+    """Admin va Super Adminga yangi bron haqida xabar yuborish"""
+    if not BOT_TOKEN or not ALL_ADMIN_IDS:
         return False
 
     try:
@@ -179,6 +190,23 @@ async def send_admin_notification(booking: Booking):
             for service in booking.services:
                 services_text += f"   • {service.service_name} - {service.price:,.0f} so'm ({service.duration} soat)\n"
 
+        # Super Admin uchun maxsus xabar (ko'proq ma'lumot bilan)
+        super_admin_message = (
+            f"👑 **YANGI BRON QILINDI!** (Super Admin)\n\n"
+            f"👤 **Mijoz:** {booking.user_name}\n"
+            f"📱 **Telefon:** {booking.user_phone}\n"
+            f"🆔 **Telegram ID:** {booking.user_telegram_id}\n"
+            f"📅 **Sana:** {booking.booking_date}\n"
+            f"⏰ **Vaqt:** {booking.booking_time}\n"
+            f"⏱ **Davomiyligi:** {booking.total_duration} soat"
+            f"{services_text}\n"
+            f"💰 **Jami summa:** {booking.total_price:,.0f} so'm\n"
+            f"🆔 **Bron ID:** #{booking.id}\n\n"
+            f"📋 Bugungi mijozlar: /mijozlar\n"
+            f"📊 Statistika: /statistika"
+        )
+
+        # Oddiy Admin uchun xabar
         admin_message = (
             f"🎉 **YANGI BRON QILINDI!**\n\n"
             f"👤 **Mijoz:** {booking.user_name}\n"
@@ -194,15 +222,44 @@ async def send_admin_notification(booking: Booking):
         )
 
         telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": ADMIN_CHAT_ID,
-            "text": admin_message,
-            "parse_mode": "Markdown"
-        }
+        success = True
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(telegram_url, json=payload)
-            return response.status_code == 200
+            # Super Admin larga yuborish
+            if SUPER_ADMIN_CHAT_IDS:
+                for super_admin_id in SUPER_ADMIN_CHAT_IDS:
+                    try:
+                        payload = {
+                            "chat_id": super_admin_id,
+                            "text": super_admin_message,
+                            "parse_mode": "Markdown"
+                        }
+                        response = await client.post(telegram_url, json=payload)
+                        if response.status_code != 200:
+                            success = False
+                            print(f"Super Admin {super_admin_id} ga xabar yuborishda xatolik")
+                    except Exception as e:
+                        print(f"Super Admin {super_admin_id} ga xabar yuborishda xatolik: {e}")
+                        success = False
+
+            # Oddiy Admin larga yuborish
+            if ADMIN_CHAT_IDS:
+                for admin_id in ADMIN_CHAT_IDS:
+                    try:
+                        payload = {
+                            "chat_id": admin_id,
+                            "text": admin_message,
+                            "parse_mode": "Markdown"
+                        }
+                        response = await client.post(telegram_url, json=payload)
+                        if response.status_code != 200:
+                            success = False
+                            print(f"Admin {admin_id} ga xabar yuborishda xatolik")
+                    except Exception as e:
+                        print(f"Admin {admin_id} ga xabar yuborishda xatolik: {e}")
+                        success = False
+
+        return success
     except Exception as e:
         print(f"Admin'ga xabar yuborishda xatolik: {e}")
         return False
