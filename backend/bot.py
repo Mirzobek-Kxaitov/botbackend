@@ -691,6 +691,7 @@ def main() -> None:
     application.add_handler(CommandHandler("mijozlar", mijozlar_command))
     application.add_handler(CommandHandler("mijozlar_sana", mijozlar_sana_command))
     application.add_handler(CommandHandler("statistika", statistika_command))
+    application.add_handler(CommandHandler("super_admin", super_admin_panel))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.CONTACT, handle_message))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
