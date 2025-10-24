@@ -349,14 +349,16 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                         )
                     logger.info(f"Super Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
 
-                # Oddiy Admin larga yuborish
+                # Oddiy Admin larga yuborish (Super Adminlarni chiqarib tashlash)
                 if ADMIN_CHAT_IDS:
                     for admin_id in ADMIN_CHAT_IDS:
-                        await context.bot.send_message(
-                            chat_id=admin_id,
-                            text=admin_message,
-                            parse_mode='Markdown'
-                        )
+                        # Agar bu admin Super Admin bo'lmasa, faqat shunda yuborish
+                        if not SUPER_ADMIN_CHAT_IDS or admin_id not in SUPER_ADMIN_CHAT_IDS:
+                            await context.bot.send_message(
+                                chat_id=admin_id,
+                                text=admin_message,
+                                parse_mode='Markdown'
+                            )
                     logger.info(f"Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
 
             except Exception as e:
