@@ -252,22 +252,24 @@ async def send_admin_notification(booking: Booking):
                         print(f"Super Admin {super_admin_id} ga xabar yuborishda xatolik: {e}")
                         success = False
 
-            # Oddiy Admin larga yuborish
+            # Oddiy Admin larga yuborish (Super Adminlarni chiqarib tashlash)
             if ADMIN_CHAT_IDS:
                 for admin_id in ADMIN_CHAT_IDS:
-                    try:
-                        payload = {
-                            "chat_id": admin_id,
-                            "text": admin_message,
-                            "parse_mode": "Markdown"
-                        }
-                        response = await client.post(telegram_url, json=payload)
-                        if response.status_code != 200:
+                    # Agar bu admin Super Admin bo'lmasa, faqat shunda yuborish
+                    if not SUPER_ADMIN_CHAT_IDS or admin_id not in SUPER_ADMIN_CHAT_IDS:
+                        try:
+                            payload = {
+                                "chat_id": admin_id,
+                                "text": admin_message,
+                                "parse_mode": "Markdown"
+                            }
+                            response = await client.post(telegram_url, json=payload)
+                            if response.status_code != 200:
+                                success = False
+                                print(f"Admin {admin_id} ga xabar yuborishda xatolik")
+                        except Exception as e:
+                            print(f"Admin {admin_id} ga xabar yuborishda xatolik: {e}")
                             success = False
-                            print(f"Admin {admin_id} ga xabar yuborishda xatolik")
-                    except Exception as e:
-                        print(f"Admin {admin_id} ga xabar yuborishda xatolik: {e}")
-                        success = False
 
         return success
     except Exception as e:
