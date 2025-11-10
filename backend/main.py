@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import get_db, Booking, User, BookingService, create_tables
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import os
 import httpx
 from sqlalchemy.exc import IntegrityError
+import pytz
 
 app = FastAPI()
 
@@ -106,8 +107,9 @@ async def get_available_times(
 async def get_available_times_internal(date: str, duration: int, db: Session):
     all_times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
-    # Hozirgi vaqtni olish (real-time validation)
-    now = datetime.now()
+    # Hozirgi vaqtni olish (real-time validation) - Tashkent timezone
+    tashkent_tz = pytz.timezone('Asia/Tashkent')
+    now = datetime.now(tashkent_tz)
     current_date = now.strftime("%Y-%m-%d")
     current_hour = now.hour
 
