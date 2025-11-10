@@ -58,11 +58,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Admin va Super Admin chat ID lar
 ADMIN_CHAT_IDS = []
 if os.getenv("ADMIN_CHAT_ID"):
-    ADMIN_CHAT_IDS = [id.strip() for id in os.getenv("ADMIN_CHAT_ID").split(",")]
+    ADMIN_CHAT_IDS = [int(id.strip()) for id in os.getenv("ADMIN_CHAT_ID").split(",")]
 
 SUPER_ADMIN_CHAT_IDS = []
 if os.getenv("SUPER_ADMIN_CHAT_ID"):
-    SUPER_ADMIN_CHAT_IDS = [id.strip() for id in os.getenv("SUPER_ADMIN_CHAT_ID").split(",")]
+    SUPER_ADMIN_CHAT_IDS = [int(id.strip()) for id in os.getenv("SUPER_ADMIN_CHAT_ID").split(",")]
 
 # Barcha adminlar (Admin + Super Admin)
 ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS

@@ -29,7 +29,7 @@ if os.getenv("SUPER_ADMIN_CHAT_ID"):
 # Barcha adminlar (Admin + Super Admin)
 ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
 
-WEBAPP_URL = "https://984156b4b0e4.ngrok-free.app"  # Lokal frontend ngrok orqali
+WEBAPP_URL = os.getenv("WEB_APP_URL", "https://barberlocal.uz")  # Frontend URL
 
 # Admin decorator (Admin va Super Admin uchun)
 def admin_only(func):
