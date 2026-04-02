@@ -195,9 +195,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             phone = update.message.contact.phone_number
             name = context.user_data.get('name')
 
-            new_user = User(telegram_id=user_id, name=name, phone=phone)
-            db.add(new_user)
-            db.commit()
+            # Check if user already exists
+            existing_user = db.query(User).filter(User.telegram_id == user_id).first()
+            if not existing_user:
+                new_user = User(telegram_id=user_id, name=name, phone=phone)
+                db.add(new_user)
+                db.commit()
+            else:
+                # Update existing user
+                existing_user.name = name
+                existing_user.phone = phone
+                db.commit()
 
             keyboard = [
                 [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]

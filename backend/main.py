@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from database import get_db, Booking, User, BookingService, create_tables
@@ -9,8 +11,13 @@ import os
 import httpx
 from sqlalchemy.exc import IntegrityError
 import pytz
+import pathlib
 
 app = FastAPI()
+
+# Mount static files (frontend) - use absolute path
+FRONTEND_DIR = pathlib.Path(__file__).parent.parent / "frontend"
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,8 +78,13 @@ ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
 async def startup():
     create_tables()
 
-@app.get("/")
-async def root():
+@app.get("/webapp")
+async def serve_webapp():
+    """Serve the frontend Web App"""
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+@app.get("/api")
+async def api_root():
     return {"message": "Barbershop Booking API"}
 
 @app.get("/available-times/today")

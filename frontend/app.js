@@ -14,7 +14,7 @@ if (tg.themeParams) {
 let selectedDate = null;
 let selectedTime = null;
 let selectedServices = []; // Tanlangan xizmatlar
-const API_BASE_URL = 'https://barberlocal.uz/api'; // Backend API manzili (lokal server)
+const API_BASE_URL = window.location.origin; // Use same origin as frontend
 
 // Helper function for fetch with ngrok headers
 async function fetchAPI(url, options = {}) {

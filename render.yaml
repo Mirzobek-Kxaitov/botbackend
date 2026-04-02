@@ -1,0 +1,58 @@
+services:
+  # Web Service (Backend API + Frontend)
+  - type: web
+    name: rustam-barber-backend
+    env: python
+    region: frankfurt  # Europe region
+    plan: free
+    branch: main
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: SUPER_ADMIN_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///./bookings.db
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: WEB_APP_URL
+        sync: false  # Will be set after deployment
+      - key: GOOGLE_SHEET_ID
+        sync: false
+
+  # Background Worker (Telegram Bot)
+  - type: worker
+    name: rustam-barber-bot
+    env: python
+    region: frankfurt
+    plan: free
+    branch: main
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python backend/bot.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: SUPER_ADMIN_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///./bookings.db
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: WEB_APP_URL
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
