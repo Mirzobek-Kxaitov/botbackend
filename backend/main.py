@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from database import get_db, Booking, User, BookingService, create_tables
+from database import get_db, Booking, User, BookingService, Barber, Service, create_tables
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import os
@@ -59,6 +59,42 @@ class BookingResponse(BaseModel):
     total_price: float
     total_duration: int
     services: List[ServiceResponse] = []
+
+# Barber Pydantic Models
+class BarberCreate(BaseModel):
+    name: str
+    bot_token: str
+    phone: Optional[str] = None
+    image_url: Optional[str] = None
+    work_start: str = "09:00"
+    work_end: str = "21:00"
+    gender_category: str = "both"  # male, female, both
+    is_active: bool = True
+
+class BarberUpdate(BaseModel):
+    name: Optional[str] = None
+    bot_token: Optional[str] = None
+    phone: Optional[str] = None
+    image_url: Optional[str] = None
+    work_start: Optional[str] = None
+    work_end: Optional[str] = None
+    gender_category: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class BarberResponse(BaseModel):
+    id: int
+    name: str
+    bot_token: str
+    phone: Optional[str]
+    image_url: Optional[str]
+    work_start: str
+    work_end: str
+    gender_category: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -378,6 +414,149 @@ async def create_booking(booking_request: BookingRequest, db: Session = Depends(
             ]
         }
     }
+
+# ==================== BARBER CRUD ENDPOINTS ====================
+
+@app.get("/api/barbers", response_model=List[BarberResponse])
+async def get_barbers(
+    skip: int = Query(0, description="Skip N barbers"),
+    limit: int = Query(100, description="Limit results"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    db: Session = Depends(get_db)
+):
+    """Barcha sartaroshlarni olish"""
+    query = db.query(Barber)
+
+    if is_active is not None:
+        query = query.filter(Barber.is_active == is_active)
+
+    barbers = query.offset(skip).limit(limit).all()
+    return barbers
+
+@app.post("/api/barbers", response_model=BarberResponse)
+async def create_barber(barber: BarberCreate, db: Session = Depends(get_db)):
+    """Yangi sartarosh qo'shish"""
+    # Check if bot_token already exists
+    existing_barber = db.query(Barber).filter(Barber.bot_token == barber.bot_token).first()
+    if existing_barber:
+        raise HTTPException(
+            status_code=400,
+            detail="Bu bot token allaqachon mavjud. Har bir sartarosh uchun alohida bot token kerak."
+        )
+
+    # Validate gender_category
+    if barber.gender_category not in ["male", "female", "both"]:
+        raise HTTPException(
+            status_code=400,
+            detail="gender_category faqat 'male', 'female' yoki 'both' bo'lishi mumkin"
+        )
+
+    new_barber = Barber(
+        name=barber.name,
+        bot_token=barber.bot_token,
+        phone=barber.phone,
+        image_url=barber.image_url,
+        work_start=barber.work_start,
+        work_end=barber.work_end,
+        gender_category=barber.gender_category,
+        is_active=barber.is_active
+    )
+
+    try:
+        db.add(new_barber)
+        db.commit()
+        db.refresh(new_barber)
+        return new_barber
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Sartarosh yaratishda xatolik. Bot token unique bo'lishi kerak."
+        )
+
+@app.get("/api/barbers/{barber_id}", response_model=BarberResponse)
+async def get_barber(barber_id: int, db: Session = Depends(get_db)):
+    """Bitta sartaroshni olish"""
+    barber = db.query(Barber).filter(Barber.id == barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+    return barber
+
+@app.put("/api/barbers/{barber_id}", response_model=BarberResponse)
+async def update_barber(
+    barber_id: int,
+    barber_update: BarberUpdate,
+    db: Session = Depends(get_db)
+):
+    """Sartarosh ma'lumotlarini yangilash"""
+    barber = db.query(Barber).filter(Barber.id == barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+
+    # Check if bot_token is being updated and already exists
+    if barber_update.bot_token:
+        existing = db.query(Barber).filter(
+            Barber.bot_token == barber_update.bot_token,
+            Barber.id != barber_id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Bu bot token boshqa sartaroshda mavjud"
+            )
+
+    # Validate gender_category if provided
+    if barber_update.gender_category and barber_update.gender_category not in ["male", "female", "both"]:
+        raise HTTPException(
+            status_code=400,
+            detail="gender_category faqat 'male', 'female' yoki 'both' bo'lishi mumkin"
+        )
+
+    # Update only provided fields
+    update_data = barber_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(barber, field, value)
+
+    try:
+        db.commit()
+        db.refresh(barber)
+        return barber
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Sartarosh yangilashda xatolik"
+        )
+
+@app.delete("/api/barbers/{barber_id}")
+async def delete_barber(barber_id: int, db: Session = Depends(get_db)):
+    """Sartaroshni o'chirish"""
+    barber = db.query(Barber).filter(Barber.id == barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+
+    # Check if barber has any bookings or users
+    booking_count = db.query(Booking).filter(Booking.barber_id == barber_id).count()
+    user_count = db.query(User).filter(User.barber_id == barber_id).count()
+
+    if booking_count > 0 or user_count > 0:
+        # Soft delete - just deactivate
+        barber.is_active = False
+        db.commit()
+        return {
+            "success": True,
+            "message": f"Sartarosh deaktivatsiya qilindi (mijozlar va bronlar mavjud). Bronlar: {booking_count}, Mijozlar: {user_count}",
+            "soft_delete": True
+        }
+    else:
+        # Hard delete - no data associated
+        db.delete(barber)
+        db.commit()
+        return {
+            "success": True,
+            "message": "Sartarosh butunlay o'chirildi",
+            "soft_delete": False
+        }
 
 if __name__ == "__main__":
     import uvicorn
