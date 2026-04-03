@@ -10,9 +10,8 @@ echo "📌 Using PORT: $PORT"
 
 echo "📡 Starting FastAPI backend on port $PORT..."
 # Add backend directory to Python path and start uvicorn
-cd backend && python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT 2>&1 &
+(cd backend && python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT 2>&1) &
 BACKEND_PID=$!
-cd ..
 echo "📌 Backend PID: $BACKEND_PID"
 
 # Wait a bit for backend to start
@@ -27,7 +26,7 @@ fi
 
 echo "🤖 Starting Telegram bot..."
 # Start bot in background
-python3 backend/bot.py 2>&1 &
+(cd backend && python3 bot.py 2>&1) &
 BOT_PID=$!
 echo "📌 Bot PID: $BOT_PID"
 
