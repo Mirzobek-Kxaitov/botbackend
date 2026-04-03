@@ -25,8 +25,8 @@ sleep 5
 # Wait extra time during deployment to avoid bot conflicts
 # This allows old instance to fully shutdown
 if [ "$RENDER" = "true" ]; then
-    echo "⏳ Waiting 30 seconds for old bot instance to shutdown..."
-    sleep 30
+    echo "⏳ Waiting 45 seconds for old bot instance to shutdown..."
+    sleep 45
 fi
 
 echo "🤖 Starting Telegram bot..."
