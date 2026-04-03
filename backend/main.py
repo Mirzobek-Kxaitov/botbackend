@@ -78,6 +78,11 @@ ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
 async def startup():
     create_tables()
 
+@app.get("/")
+async def root():
+    """Root endpoint - redirect to webapp"""
+    return {"message": "Rustam Barber Booking System", "webapp": "/webapp", "status": "running"}
+
 @app.get("/webapp")
 async def serve_webapp():
     """Serve the frontend Web App"""
