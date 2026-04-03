@@ -195,32 +195,44 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             phone = update.message.contact.phone_number
             name = context.user_data.get('name')
 
-            # Check if user already exists
-            existing_user = db.query(User).filter(User.telegram_id == user_id).first()
-            if not existing_user:
-                new_user = User(telegram_id=user_id, name=name, phone=phone)
-                db.add(new_user)
-                db.commit()
-            else:
-                # Update existing user
-                existing_user.name = name
-                existing_user.phone = phone
-                db.commit()
+            logger.info(f"Processing phone registration: name={name}, phone={phone}, user_id={user_id}")
 
-            keyboard = [
-                [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
-            ]
-            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+            try:
+                # Check if user already exists
+                existing_user = db.query(User).filter(User.telegram_id == user_id).first()
+                if not existing_user:
+                    new_user = User(telegram_id=user_id, name=name, phone=phone)
+                    db.add(new_user)
+                    db.commit()
+                    logger.info(f"New user created: {user_id}")
+                else:
+                    # Update existing user
+                    existing_user.name = name
+                    existing_user.phone = phone
+                    db.commit()
+                    logger.info(f"User updated: {user_id}")
 
-            await update.message.reply_text(
-                f"Ro'yxatdan o'tish muvaffaqiyatli yakunlandi! ✅\n\n"
-                f"Ism: {name}\n"
-                f"Telefon: {phone}\n\n"
-                "Endi sartaroshxonaga bron qilish uchun quyidagi tugmani bosing:",
-                reply_markup=reply_markup
-            )
+                logger.info(f"WEB_APP_URL: {WEBAPP_URL}")
 
-            context.user_data.clear()
+                keyboard = [
+                    [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
+                ]
+                reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+                await update.message.reply_text(
+                    f"Ro'yxatdan o'tish muvaffaqiyatli yakunlandi! ✅\n\n"
+                    f"Ism: {name}\n"
+                    f"Telefon: {phone}\n\n"
+                    "Endi sartaroshxonaga bron qilish uchun quyidagi tugmani bosing:",
+                    reply_markup=reply_markup
+                )
+
+                logger.info(f"Registration complete message sent to {user_id}")
+                context.user_data.clear()
+
+            except Exception as e:
+                logger.error(f"Error during registration: {e}", exc_info=True)
+                await update.message.reply_text("Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.")
 
         # Admin tugmalarini handle qilish
         elif ALL_ADMIN_IDS and int(user_id) in ALL_ADMIN_IDS:
