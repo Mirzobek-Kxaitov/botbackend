@@ -4,13 +4,18 @@
 
 echo "🚀 Starting Rustam Barber services..."
 
+# Get current script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "📌 Working from: $SCRIPT_DIR"
+
 # Get PORT from environment or use default
 PORT=${PORT:-8000}
 echo "📌 Using PORT: $PORT"
 
 echo "📡 Starting FastAPI backend on port $PORT..."
-# Add backend directory to Python path and start uvicorn
-(cd backend && python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT 2>&1) &
+# Start uvicorn from backend directory
+cd "$SCRIPT_DIR/backend"
+python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT 2>&1 &
 BACKEND_PID=$!
 echo "📌 Backend PID: $BACKEND_PID"
 
@@ -25,8 +30,8 @@ if [ "$RENDER" = "true" ]; then
 fi
 
 echo "🤖 Starting Telegram bot..."
-# Start bot in background
-(cd backend && python3 bot.py 2>&1) &
+# Start bot from backend directory (already in backend dir)
+python3 bot.py 2>&1 &
 BOT_PID=$!
 echo "📌 Bot PID: $BOT_PID"
 
