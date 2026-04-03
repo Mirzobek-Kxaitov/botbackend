@@ -14,6 +14,42 @@ else:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+class Barber(Base):
+    """Sartaroshlar jadvali"""
+    __tablename__ = "barbers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)  # Sartarosh ismi
+    bot_token = Column(String, unique=True, nullable=False)  # Telegram bot token
+    phone = Column(String, nullable=True)  # Telefon raqam
+    image_url = Column(String, nullable=True)  # Rasm URL
+    work_start = Column(String, default="09:00")  # Ish boshlanishi
+    work_end = Column(String, default="21:00")  # Ish tugashi
+    is_active = Column(Boolean, default=True)  # Faolmi
+    gender_category = Column(String, default="both")  # male, female, both
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    services = relationship("Service", back_populates="barber", cascade="all, delete-orphan")
+    users = relationship("User", back_populates="barber")
+    bookings = relationship("Booking", back_populates="barber")
+
+class Service(Base):
+    """Xizmatlar jadvali"""
+    __tablename__ = "services"
+
+    id = Column(Integer, primary_key=True, index=True)
+    barber_id = Column(Integer, ForeignKey('barbers.id'), nullable=False)
+    name = Column(String, nullable=False)  # Xizmat nomi
+    price = Column(Float, nullable=False)  # Narx
+    duration = Column(Integer, default=1)  # Davomiylik (soatda)
+    gender_category = Column(String, default="both")  # male, female, both
+    is_active = Column(Boolean, default=True)  # Faolmi
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    barber = relationship("Barber", back_populates="services")
+
 class User(Base):
     __tablename__ = "users"
 
@@ -21,12 +57,17 @@ class User(Base):
     telegram_id = Column(String, unique=True, index=True)
     name = Column(String)
     phone = Column(String)
+    barber_id = Column(Integer, ForeignKey('barbers.id'), nullable=True)  # Qaysi sartarosh mijozi
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    barber = relationship("Barber", back_populates="users")
 
 class Booking(Base):
     __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
+    barber_id = Column(Integer, ForeignKey('barbers.id'), nullable=True)  # Qaysi sartarosh
     user_telegram_id = Column(String)
     user_name = Column(String)
     user_phone = Column(String)
@@ -37,11 +78,12 @@ class Booking(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
-    # Relationship
+    # Relationships
+    barber = relationship("Barber", back_populates="bookings")
     services = relationship("BookingService", back_populates="booking", cascade="all, delete-orphan")
 
     __table_args__ = (
-        UniqueConstraint('booking_date', 'booking_time', 'is_active', name='unique_active_booking_per_slot'),
+        UniqueConstraint('barber_id', 'booking_date', 'booking_time', 'is_active', name='unique_active_booking_per_barber_slot'),
     )
 
 class BookingService(Base):
