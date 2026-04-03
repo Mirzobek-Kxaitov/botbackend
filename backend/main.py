@@ -96,6 +96,35 @@ class BarberResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# Service Pydantic Models
+class ServiceCreate(BaseModel):
+    barber_id: int
+    name: str
+    price: float
+    duration: int = 1
+    gender_category: str = "both"  # male, female, both
+    is_active: bool = True
+
+class ServiceUpdate(BaseModel):
+    name: Optional[str] = None
+    price: Optional[float] = None
+    duration: Optional[int] = None
+    gender_category: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ServiceResponseDetailed(BaseModel):
+    id: int
+    barber_id: int
+    name: str
+    price: float
+    duration: int
+    gender_category: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Admin va Super Admin chat ID lar
@@ -555,6 +584,156 @@ async def delete_barber(barber_id: int, db: Session = Depends(get_db)):
         return {
             "success": True,
             "message": "Sartarosh butunlay o'chirildi",
+            "soft_delete": False
+        }
+
+# ==================== SERVICE CRUD ENDPOINTS ====================
+
+@app.get("/api/services", response_model=List[ServiceResponseDetailed])
+async def get_services(
+    barber_id: Optional[int] = Query(None, description="Filter by barber ID"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    gender_category: Optional[str] = Query(None, description="Filter by gender category"),
+    skip: int = Query(0, description="Skip N services"),
+    limit: int = Query(100, description="Limit results"),
+    db: Session = Depends(get_db)
+):
+    """Barcha xizmatlarni olish (filtrlash imkoniyati bilan)"""
+    query = db.query(Service)
+
+    if barber_id is not None:
+        query = query.filter(Service.barber_id == barber_id)
+
+    if is_active is not None:
+        query = query.filter(Service.is_active == is_active)
+
+    if gender_category:
+        query = query.filter(Service.gender_category == gender_category)
+
+    services = query.offset(skip).limit(limit).all()
+    return services
+
+@app.post("/api/services", response_model=ServiceResponseDetailed)
+async def create_service(service: ServiceCreate, db: Session = Depends(get_db)):
+    """Yangi xizmat qo'shish"""
+    # Check if barber exists
+    barber = db.query(Barber).filter(Barber.id == service.barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+
+    # Validate gender_category
+    if service.gender_category not in ["male", "female", "both"]:
+        raise HTTPException(
+            status_code=400,
+            detail="gender_category faqat 'male', 'female' yoki 'both' bo'lishi mumkin"
+        )
+
+    # Validate price and duration
+    if service.price <= 0:
+        raise HTTPException(status_code=400, detail="Narx 0 dan katta bo'lishi kerak")
+
+    if service.duration <= 0:
+        raise HTTPException(status_code=400, detail="Davomiylik 0 dan katta bo'lishi kerak")
+
+    new_service = Service(
+        barber_id=service.barber_id,
+        name=service.name,
+        price=service.price,
+        duration=service.duration,
+        gender_category=service.gender_category,
+        is_active=service.is_active
+    )
+
+    try:
+        db.add(new_service)
+        db.commit()
+        db.refresh(new_service)
+        return new_service
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Xizmat yaratishda xatolik"
+        )
+
+@app.get("/api/services/{service_id}", response_model=ServiceResponseDetailed)
+async def get_service(service_id: int, db: Session = Depends(get_db)):
+    """Bitta xizmatni olish"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Xizmat topilmadi")
+    return service
+
+@app.put("/api/services/{service_id}", response_model=ServiceResponseDetailed)
+async def update_service(
+    service_id: int,
+    service_update: ServiceUpdate,
+    db: Session = Depends(get_db)
+):
+    """Xizmat ma'lumotlarini yangilash"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Xizmat topilmadi")
+
+    # Validate gender_category if provided
+    if service_update.gender_category and service_update.gender_category not in ["male", "female", "both"]:
+        raise HTTPException(
+            status_code=400,
+            detail="gender_category faqat 'male', 'female' yoki 'both' bo'lishi mumkin"
+        )
+
+    # Validate price if provided
+    if service_update.price is not None and service_update.price <= 0:
+        raise HTTPException(status_code=400, detail="Narx 0 dan katta bo'lishi kerak")
+
+    # Validate duration if provided
+    if service_update.duration is not None and service_update.duration <= 0:
+        raise HTTPException(status_code=400, detail="Davomiylik 0 dan katta bo'lishi kerak")
+
+    # Update only provided fields
+    update_data = service_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(service, field, value)
+
+    try:
+        db.commit()
+        db.refresh(service)
+        return service
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Xizmat yangilashda xatolik"
+        )
+
+@app.delete("/api/services/{service_id}")
+async def delete_service(service_id: int, db: Session = Depends(get_db)):
+    """Xizmatni o'chirish"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Xizmat topilmadi")
+
+    # Check if service is used in any bookings
+    booking_service_count = db.query(BookingService).filter(
+        BookingService.service_code == str(service.id)  # Assuming service_code stores service ID
+    ).count()
+
+    if booking_service_count > 0:
+        # Soft delete - just deactivate
+        service.is_active = False
+        db.commit()
+        return {
+            "success": True,
+            "message": f"Xizmat deaktivatsiya qilindi (bronlarda ishlatilgan: {booking_service_count})",
+            "soft_delete": True
+        }
+    else:
+        # Hard delete - no bookings associated
+        db.delete(service)
+        db.commit()
+        return {
+            "success": True,
+            "message": "Xizmat butunlay o'chirildi",
             "soft_delete": False
         }
 
