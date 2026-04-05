@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sartaroshlar - Barbers Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>💈 Barbers Admin</h1>
+            <div class="header-actions">
+                <nav class="nav">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="barbers.html" class="active">Sartaroshlar</a>
+                    <a href="services.html">Xizmatlar</a>
+                    <a href="bookings.html">Bronlar</a>
+                </nav>
+                <button onclick="Auth.logout()" class="btn btn-secondary btn-sm">
+                    Chiqish
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Sartaroshlar</h2>
+                <button onclick="openAddModal()" class="btn btn-primary">
+                    ➕ Yangi sartarosh
+                </button>
+            </div>
+
+            <div id="barbersTable">
+                <!-- Barbers will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Barber Modal -->
+    <div id="barberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Yangi sartarosh</h3>
+                <button onclick="closeModal()" class="modal-close">&times;</button>
+            </div>
+
+            <form id="barberForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="barberName">Ism *</label>
+                        <input
+                            type="text"
+                            id="barberName"
+                            class="form-input"
+                            placeholder="Rustam"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="barberToken">Bot Token *</label>
+                        <input
+                            type="text"
+                            id="barberToken"
+                            class="form-input"
+                            placeholder="123456:ABCDefGhIjKlMnOpQrStUvWxYz"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="barberPhone">Telefon</label>
+                            <input
+                                type="tel"
+                                id="barberPhone"
+                                class="form-input"
+                                placeholder="+998901234567"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="barberGender">Kategoriya</label>
+                            <select id="barberGender" class="form-select">
+                                <option value="both">Ikkala jins</option>
+                                <option value="male">Erkak</option>
+                                <option value="female">Ayol</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="barberImageUrl">Rasm URL</label>
+                        <input
+                            type="url"
+                            id="barberImageUrl"
+                            class="form-input"
+                            placeholder="https://example.com/photo.jpg"
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="barberWorkStart">Ish boshlanishi</label>
+                            <input
+                                type="time"
+                                id="barberWorkStart"
+                                class="form-input"
+                                value="09:00"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="barberWorkEnd">Ish tugashi</label>
+                            <input
+                                type="time"
+                                id="barberWorkEnd"
+                                class="form-input"
+                                value="21:00"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input
+                                type="checkbox"
+                                id="barberIsActive"
+                                checked
+                            >
+                            <span class="form-label" style="margin: 0;">Faol</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">
+                        Bekor qilish
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/barbers.js"></script>
+</body>
+</html>

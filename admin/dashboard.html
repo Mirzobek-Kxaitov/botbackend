@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Barbers Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>💈 Barbers Admin</h1>
+            <div class="header-actions">
+                <nav class="nav">
+                    <a href="dashboard.html" class="active">Dashboard</a>
+                    <a href="barbers.html">Sartaroshlar</a>
+                    <a href="services.html">Xizmatlar</a>
+                    <a href="bookings.html">Bronlar</a>
+                </nav>
+                <button onclick="Auth.logout()" class="btn btn-secondary btn-sm">
+                    Chiqish
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Sartaroshlar</span>
+                    <div class="stat-card-icon primary">
+                        👨‍💼
+                    </div>
+                </div>
+                <div class="stat-card-value" id="barbersCount">-</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Xizmatlar</span>
+                    <div class="stat-card-icon success">
+                        ✂️
+                    </div>
+                </div>
+                <div class="stat-card-value" id="servicesCount">-</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Bugungi Bronlar</span>
+                    <div class="stat-card-icon warning">
+                        📅
+                    </div>
+                </div>
+                <div class="stat-card-value" id="bookingsCount">-</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Tezkor harakatlar</h2>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="barbers.html" class="btn btn-primary">
+                    ➕ Yangi sartarosh
+                </a>
+                <a href="services.html" class="btn btn-primary">
+                    ➕ Yangi xizmat
+                </a>
+                <a href="bookings.html" class="btn btn-secondary">
+                    📋 Bronlarni ko'rish
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">So'nggi sartaroshlar</h2>
+            </div>
+            <div id="recentBarbers" class="loading">
+                <div class="spinner"></div>
+                <p>Yuklanmoqda...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        async function loadDashboard() {
+            try {
+                // Load barbers count
+                const barbers = await API.getBarbers();
+                document.getElementById('barbersCount').textContent = barbers.length;
+
+                // Load services count
+                const services = await API.getServices();
+                document.getElementById('servicesCount').textContent = services.length;
+
+                // Load today's bookings count
+                const today = new Date().toISOString().split('T')[0];
+                const bookings = await API.getBookings(today);
+                document.getElementById('bookingsCount').textContent = bookings.length;
+
+                // Display recent barbers
+                const recentBarbersEl = document.getElementById('recentBarbers');
+                if (barbers.length === 0) {
+                    recentBarbersEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div class="empty-state-title">Hali sartaroshlar yo'q</div>
+                            <p>Yangi sartarosh qo'shish uchun yuqoridagi tugmani bosing</p>
+                        </div>
+                    `;
+                } else {
+                    const barbersHtml = barbers.slice(0, 5).map(barber => `
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-weight: 600; margin-bottom: 0.25rem;">${barber.name}</h3>
+                                <p style="color: var(--gray-600); font-size: 0.875rem;">
+                                    ${barber.phone || 'Telefon ko\'rsatilmagan'} •
+                                    ${barber.work_start} - ${barber.work_end}
+                                </p>
+                            </div>
+                            <span class="badge ${barber.is_active ? 'badge-success' : 'badge-danger'}">
+                                ${barber.is_active ? 'Faol' : 'Nofaol'}
+                            </span>
+                        </div>
+                    `).join('');
+                    recentBarbersEl.innerHTML = barbersHtml;
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showNotification('Ma\'lumotlarni yuklashda xatolik', 'error');
+            }
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

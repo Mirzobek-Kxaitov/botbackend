@@ -15,9 +15,12 @@ import pathlib
 
 app = FastAPI()
 
-# Mount static files (frontend) - use absolute path
+# Mount static files (frontend and admin) - use absolute path
 FRONTEND_DIR = pathlib.Path(__file__).parent.parent / "frontend"
+ADMIN_DIR = pathlib.Path(__file__).parent.parent / "admin"
+
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+app.mount("/admin", StaticFiles(directory=str(ADMIN_DIR), html=True), name="admin")
 
 app.add_middleware(
     CORSMiddleware,
