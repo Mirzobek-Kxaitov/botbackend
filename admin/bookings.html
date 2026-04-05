@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bronlar - Barbers Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>💈 Barbers Admin</h1>
+            <div class="header-actions">
+                <nav class="nav">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="barbers.html">Sartaroshlar</a>
+                    <a href="services.html">Xizmatlar</a>
+                    <a href="bookings.html" class="active">Bronlar</a>
+                </nav>
+                <button onclick="Auth.logout()" class="btn btn-secondary btn-sm">
+                    Chiqish
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Jami Bronlar</span>
+                    <div class="stat-card-icon primary">
+                        📋
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalBookings">0</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span class="stat-card-title">Jami Daromad</span>
+                    <div class="stat-card-icon success">
+                        💰
+                    </div>
+                </div>
+                <div class="stat-card-value" id="totalRevenue" style="font-size: 1.5rem;">0 so'm</div>
+            </div>
+        </div>
+
+        <!-- Date Selector -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Sana tanlash</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="goToToday()" class="btn btn-secondary btn-sm">
+                        📅 Bugun
+                    </button>
+                    <button onclick="goToTomorrow()" class="btn btn-secondary btn-sm">
+                        📅 Ertaga
+                    </button>
+                </div>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <input
+                    type="date"
+                    id="dateSelector"
+                    class="form-input"
+                    onchange="changeDate()"
+                >
+            </div>
+        </div>
+
+        <!-- Bookings Table -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Bronlar</h2>
+            </div>
+
+            <div id="bookingsTable">
+                <!-- Bookings will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/bookings.js"></script>
+</body>
+</html>

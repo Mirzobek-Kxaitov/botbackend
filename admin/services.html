@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xizmatlar - Barbers Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>💈 Barbers Admin</h1>
+            <div class="header-actions">
+                <nav class="nav">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="barbers.html">Sartaroshlar</a>
+                    <a href="services.html" class="active">Xizmatlar</a>
+                    <a href="bookings.html">Bronlar</a>
+                </nav>
+                <button onclick="Auth.logout()" class="btn btn-secondary btn-sm">
+                    Chiqish
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Filters -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Filtrlash</h3>
+                <button onclick="clearFilters()" class="btn btn-secondary btn-sm">
+                    🔄 Tozalash
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="filterBarber">Sartarosh</label>
+                    <select id="filterBarber" class="form-select" onchange="filterServices()">
+                        <option value="">Barchasi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filterGender">Kategoriya</label>
+                    <select id="filterGender" class="form-select" onchange="filterServices()">
+                        <option value="">Barchasi</option>
+                        <option value="male">Erkak</option>
+                        <option value="female">Ayol</option>
+                        <option value="both">Ikkala jins</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filterStatus">Holat</label>
+                    <select id="filterStatus" class="form-select" onchange="filterServices()">
+                        <option value="">Barchasi</option>
+                        <option value="true">Faol</option>
+                        <option value="false">Nofaol</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Table -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Xizmatlar</h2>
+                <button onclick="openAddModal()" class="btn btn-primary">
+                    ➕ Yangi xizmat
+                </button>
+            </div>
+
+            <div id="servicesTable">
+                <!-- Services will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Service Modal -->
+    <div id="serviceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Yangi xizmat</h3>
+                <button onclick="closeModal()" class="modal-close">&times;</button>
+            </div>
+
+            <form id="serviceForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="serviceBarber">Sartarosh *</label>
+                        <select id="serviceBarber" class="form-select" required>
+                            <option value="">Tanlang...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="serviceName">Xizmat nomi *</label>
+                        <input
+                            type="text"
+                            id="serviceName"
+                            class="form-input"
+                            placeholder="Soch olish"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="servicePrice">Narx (so'm) *</label>
+                            <input
+                                type="number"
+                                id="servicePrice"
+                                class="form-input"
+                                placeholder="50000"
+                                min="0"
+                                step="1000"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="serviceDuration">Davomiylik (soat) *</label>
+                            <input
+                                type="number"
+                                id="serviceDuration"
+                                class="form-input"
+                                placeholder="1"
+                                min="1"
+                                max="8"
+                                value="1"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="serviceGender">Kategoriya</label>
+                        <select id="serviceGender" class="form-select">
+                            <option value="both">Ikkala jins</option>
+                            <option value="male">Erkak</option>
+                            <option value="female">Ayol</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input
+                                type="checkbox"
+                                id="serviceIsActive"
+                                checked
+                            >
+                            <span class="form-label" style="margin: 0;">Faol</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">
+                        Bekor qilish
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/services.js"></script>
+    <script>
+        // Populate filter dropdown with barbers
+        async function populateFilterDropdown() {
+            try {
+                const barbers = await API.getBarbers();
+                const filterSelect = document.getElementById('filterBarber');
+                filterSelect.innerHTML = '<option value="">Barchasi</option>' +
+                    barbers.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading barbers for filter:', error);
+            }
+        }
+
+        populateFilterDropdown();
+    </script>
+</body>
+</html>
