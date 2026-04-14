@@ -28,9 +28,14 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Sartaroshlar</h2>
-                <button onclick="openAddModal()" class="btn btn-primary">
-                    ➕ Yangi sartarosh
-                </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="restartAllBots()" class="btn btn-secondary">
+                        🔄 Barcha botlarni qayta ishga tushirish
+                    </button>
+                    <button onclick="openAddModal()" class="btn btn-primary">
+                        ➕ Yangi sartarosh
+                    </button>
+                </div>
             </div>
 
             <div id="barbersTable">

@@ -103,11 +103,21 @@ async def stop_all_bots():
 
 async def main():
     """Asosiy funksiya"""
+    # Register bot manager with FastAPI for dynamic bot control
+    try:
+        import main as main_module
+        import sys
+        current_module = sys.modules[__name__]
+        main_module.set_bot_manager(current_module)
+        logger.info("✅ Bot manager FastAPI ga ulandi")
+    except Exception as e:
+        logger.warning(f"⚠️ Bot manager FastAPI ga ulanmadi: {e}")
+
     await start_all_bots()
 
     if not running_bots:
-        logger.info("Hech qanday bot ishga tushmadi. Dastur tugamoqda.")
-        return
+        logger.info("Hech qanday bot ishga tushmadi. Kutish rejimida...")
+        # Botlar yo'q bo'lsa ham manager ishlayveradi (API orqali qo'shish uchun)
 
     # Keep running until interrupted
     stop_event = asyncio.Event()

@@ -20,7 +20,6 @@ FRONTEND_DIR = pathlib.Path(__file__).parent.parent / "frontend"
 ADMIN_DIR = pathlib.Path(__file__).parent.parent / "admin"
 
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-app.mount("/admin", StaticFiles(directory=str(ADMIN_DIR), html=True), name="admin")
 
 app.add_middleware(
     CORSMiddleware,
@@ -739,6 +738,96 @@ async def delete_service(service_id: int, db: Session = Depends(get_db)):
             "message": "Xizmat butunlay o'chirildi",
             "soft_delete": False
         }
+
+# ==================== BOT MANAGEMENT ENDPOINTS ====================
+
+# Bot manager reference (set by bot_manager.py at startup)
+_bot_manager = None
+
+def set_bot_manager(manager_module):
+    """Bot manager modulini o'rnatish (bot_manager.py dan chaqiriladi)"""
+    global _bot_manager
+    _bot_manager = manager_module
+
+@app.get("/api/bots/status")
+async def get_bots_status():
+    """Barcha botlar holatini olish"""
+    if not _bot_manager:
+        return {"running_bots": [], "total": 0, "manager_active": False}
+
+    running_ids = list(_bot_manager.running_bots.keys())
+
+    db_session = next(get_db())
+    try:
+        barbers = db_session.query(Barber).filter(Barber.is_active == True).all()
+        status_list = []
+        for barber in barbers:
+            status_list.append({
+                "barber_id": barber.id,
+                "barber_name": barber.name,
+                "is_running": barber.id in running_ids
+            })
+        return {
+            "running_bots": status_list,
+            "total": len(running_ids),
+            "manager_active": True
+        }
+    finally:
+        db_session.close()
+
+@app.post("/api/bots/{barber_id}/start")
+async def start_bot_endpoint(barber_id: int, db: Session = Depends(get_db)):
+    """Sartarosh botini ishga tushirish"""
+    if not _bot_manager:
+        raise HTTPException(status_code=503, detail="Bot manager ishlamayapti")
+
+    barber = db.query(Barber).filter(Barber.id == barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+
+    if barber_id in _bot_manager.running_bots:
+        return {"success": True, "message": f"{barber.name} boti allaqachon ishlayapti"}
+
+    success = await _bot_manager.start_bot(barber.id, barber.bot_token, barber.name)
+    if success:
+        return {"success": True, "message": f"{barber.name} boti ishga tushirildi"}
+    else:
+        raise HTTPException(status_code=500, detail=f"{barber.name} botini ishga tushirishda xatolik")
+
+@app.post("/api/bots/{barber_id}/stop")
+async def stop_bot_endpoint(barber_id: int, db: Session = Depends(get_db)):
+    """Sartarosh botini to'xtatish"""
+    if not _bot_manager:
+        raise HTTPException(status_code=503, detail="Bot manager ishlamayapti")
+
+    barber = db.query(Barber).filter(Barber.id == barber_id).first()
+    barber_name = barber.name if barber else f"Barber-{barber_id}"
+
+    if barber_id not in _bot_manager.running_bots:
+        return {"success": True, "message": f"{barber_name} boti allaqachon to'xtatilgan"}
+
+    success = await _bot_manager.stop_bot(barber_id, barber_name)
+    if success:
+        return {"success": True, "message": f"{barber_name} boti to'xtatildi"}
+    else:
+        raise HTTPException(status_code=500, detail=f"{barber_name} botini to'xtatishda xatolik")
+
+@app.post("/api/bots/restart-all")
+async def restart_all_bots():
+    """Barcha botlarni qayta ishga tushirish"""
+    if not _bot_manager:
+        raise HTTPException(status_code=503, detail="Bot manager ishlamayapti")
+
+    await _bot_manager.stop_all_bots()
+    await _bot_manager.start_all_bots()
+    return {
+        "success": True,
+        "message": f"{len(_bot_manager.running_bots)} ta bot qayta ishga tushirildi"
+    }
+
+# ==================== ADMIN PANEL (mount at the end) ====================
+# Admin panel mount eng oxirida bo'lishi kerak, chunki u barcha sub-pathlarni ushlab oladi
+app.mount("/admin", StaticFiles(directory=str(ADMIN_DIR), html=True), name="admin")
 
 if __name__ == "__main__":
     import uvicorn

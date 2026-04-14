@@ -1,6 +1,7 @@
 // Barbers Management Script
 
 let barbers = [];
+let botStatuses = {};
 let editingBarberId = null;
 
 // Load barbers on page load
@@ -14,7 +15,21 @@ async function loadBarbers() {
             </div>
         `;
 
-        barbers = await API.getBarbers();
+        // Load barbers and bot statuses in parallel
+        const [barbersData, statusData] = await Promise.all([
+            API.getBarbers(),
+            API.request('/api/bots/status').catch(() => ({ running_bots: [], manager_active: false }))
+        ]);
+        barbers = barbersData;
+
+        // Map bot statuses by barber_id
+        botStatuses = {};
+        if (statusData.running_bots) {
+            statusData.running_bots.forEach(b => {
+                botStatuses[b.barber_id] = b.is_running;
+            });
+        }
+
         renderBarbers();
     } catch (error) {
         console.error('Error loading barbers:', error);
@@ -48,11 +63,14 @@ function renderBarbers() {
                         <th>Ish vaqti</th>
                         <th>Kategoriya</th>
                         <th>Holat</th>
+                        <th>Bot</th>
                         <th>Harakatlar</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${barbers.map(barber => `
+                    ${barbers.map(barber => {
+                        const isRunning = botStatuses[barber.id] === true;
+                        return `
                         <tr>
                             <td>${barber.id}</td>
                             <td>
@@ -72,6 +90,14 @@ function renderBarbers() {
                                 </span>
                             </td>
                             <td>
+                                ${isRunning
+                                    ? `<span class="badge badge-success">Ishlayapti</span>
+                                       <button onclick="toggleBot(${barber.id}, 'stop')" class="btn btn-danger btn-sm" style="margin-left:4px;">Stop</button>`
+                                    : `<span class="badge badge-danger">To'xtagan</span>
+                                       <button onclick="toggleBot(${barber.id}, 'start')" class="btn btn-primary btn-sm" style="margin-left:4px;">Start</button>`
+                                }
+                            </td>
+                            <td>
                                 <button onclick="editBarber(${barber.id})" class="btn btn-secondary btn-sm">
                                     ✏️ Tahrirlash
                                 </button>
@@ -80,7 +106,8 @@ function renderBarbers() {
                                 </button>
                             </td>
                         </tr>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
@@ -179,6 +206,34 @@ async function deleteBarber(id) {
     } catch (error) {
         console.error('Error deleting barber:', error);
         showNotification(error.message || 'O\'chirishda xatolik', 'error');
+    }
+}
+
+// Toggle bot start/stop
+async function toggleBot(barberId, action) {
+    try {
+        const result = await API.request(`/api/bots/${barberId}/${action}`, {
+            method: 'POST'
+        });
+        showNotification(result.message, 'success');
+        loadBarbers();
+    } catch (error) {
+        console.error(`Error ${action} bot:`, error);
+        showNotification(error.message || `Bot ${action} xatolik`, 'error');
+    }
+}
+
+// Restart all bots
+async function restartAllBots() {
+    if (!confirm('Barcha botlarni qayta ishga tushirmoqchimisiz?')) return;
+
+    try {
+        const result = await API.request('/api/bots/restart-all', { method: 'POST' });
+        showNotification(result.message, 'success');
+        loadBarbers();
+    } catch (error) {
+        console.error('Error restarting bots:', error);
+        showNotification(error.message || 'Qayta ishga tushirishda xatolik', 'error');
     }
 }
 
