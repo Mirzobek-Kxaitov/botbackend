@@ -54,7 +54,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    telegram_id = Column(String, unique=True, index=True)
+    telegram_id = Column(String, index=True)  # unique emas - bitta user bir nechta sartaroshda bo'lishi mumkin
     name = Column(String)
     phone = Column(String)
     barber_id = Column(Integer, ForeignKey('barbers.id'), nullable=True)  # Qaysi sartarosh mijozi
@@ -62,6 +62,10 @@ class User(Base):
 
     # Relationship
     barber = relationship("Barber", back_populates="users")
+
+    __table_args__ = (
+        UniqueConstraint('telegram_id', 'barber_id', name='unique_user_per_barber'),
+    )
 
 class Booking(Base):
     __tablename__ = "bookings"

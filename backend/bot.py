@@ -4,7 +4,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from database import engine, User, Booking, BookingService, create_tables
+from database import engine, User, Booking, BookingService, Barber, Service, create_tables
 from datetime import datetime, timedelta
 from google_sheets import export_booking_to_sheets, export_all_bookings_to_sheets, get_sheets_url
 import json
@@ -59,18 +59,34 @@ def super_admin_only(func):
             )
     return wrapper
 
+def get_barber_id(context):
+    """Bot data dan barber_id ni olish"""
+    return context.bot_data.get('barber_id')
+
+
+def get_barber_name(context):
+    """Bot data dan barber nomini olish"""
+    return context.bot_data.get('barber_name', 'Sartarosh')
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     username = update.effective_user.username or "yo'q"
-    logger.info(f"Start command from user: ID={user_id}, Username=@{username}")
+    barber_id = get_barber_id(context)
+    barber_name = get_barber_name(context)
+    logger.info(f"[{barber_name}] Start command from user: ID={user_id}, Username=@{username}")
     db = SessionLocal()
 
     try:
-        existing_user = db.query(User).filter(User.telegram_id == user_id).first()
+        # Bu sartaroshda ro'yxatdan o'tgan usermi?
+        existing_user = db.query(User).filter(
+            User.telegram_id == user_id,
+            User.barber_id == barber_id
+        ).first()
 
         if not existing_user:
             await update.message.reply_text(
-                "Salom! Sartaroshxonaga xush kelibsiz! 👋\n\n"
+                f"Salom! {barber_name} sartaroshxonasiga xush kelibsiz! 👋\n\n"
                 "Bron qilish uchun iltimos ismingizni yuboring:"
             )
             context.user_data['registration_step'] = 'name'
@@ -123,7 +139,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
                 await update.message.reply_text(
                     f"Xush kelibsiz, {existing_user.name}! 🎉\n\n"
-                    "Sartaroshxonaga bron qilish uchun quyidagi tugmani bosing:",
+                    f"{barber_name} sartaroshxonasiga bron qilish uchun quyidagi tugmani bosing:",
                     reply_markup=reply_markup
                 )
     finally:
@@ -174,6 +190,8 @@ Barcha admin buyruqlari + qo'shimcha huquqlar
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     text = update.message.text
+    barber_id = get_barber_id(context)
+    barber_name = get_barber_name(context)
     db = SessionLocal()
 
     try:
@@ -195,22 +213,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             phone = update.message.contact.phone_number
             name = context.user_data.get('name')
 
-            logger.info(f"Processing phone registration: name={name}, phone={phone}, user_id={user_id}")
+            logger.info(f"[{barber_name}] Processing phone registration: name={name}, phone={phone}, user_id={user_id}")
 
             try:
-                # Check if user already exists
-                existing_user = db.query(User).filter(User.telegram_id == user_id).first()
+                # Check if user already exists for this barber
+                existing_user = db.query(User).filter(
+                    User.telegram_id == user_id,
+                    User.barber_id == barber_id
+                ).first()
                 if not existing_user:
-                    new_user = User(telegram_id=user_id, name=name, phone=phone)
+                    new_user = User(telegram_id=user_id, name=name, phone=phone, barber_id=barber_id)
                     db.add(new_user)
                     db.commit()
-                    logger.info(f"New user created: {user_id}")
+                    logger.info(f"[{barber_name}] New user created: {user_id}")
                 else:
                     # Update existing user
                     existing_user.name = name
                     existing_user.phone = phone
                     db.commit()
-                    logger.info(f"User updated: {user_id}")
+                    logger.info(f"[{barber_name}] User updated: {user_id}")
 
                 logger.info(f"WEB_APP_URL: {WEBAPP_URL}")
 
@@ -255,12 +276,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     db = None
+    barber_id = get_barber_id(context)
+    barber_name = get_barber_name(context)
     try:
         data = json.loads(update.effective_message.web_app_data.data)
         user_id = str(update.effective_user.id)
         db = SessionLocal()
 
-        user = db.query(User).filter(User.telegram_id == user_id).first()
+        user = db.query(User).filter(
+            User.telegram_id == user_id,
+            User.barber_id == barber_id
+        ).first()
         if not user:
             await update.message.reply_text("❌ Xatolik: Foydalanuvchi topilmadi.")
             return
@@ -273,6 +299,7 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         # Yangi bron yaratish (database-level constraint bilan himoyalangan)
         new_booking = Booking(
+            barber_id=barber_id,
             user_telegram_id=user_id,
             user_name=user.name,
             user_phone=user.phone,
@@ -421,11 +448,13 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def mijozlar_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Bugungi mijozlar ro'yxatini ko'rsatish"""
     today = datetime.now().date()
+    barber_id = get_barber_id(context)
 
     db = SessionLocal()
     try:
-        # Bugungi bronlarni olish
+        # Bugungi bronlarni olish (shu sartarosh uchun)
         bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date == today.strftime('%Y-%m-%d'),
             Booking.is_active == True
         ).order_by(Booking.booking_time).all()
@@ -493,10 +522,12 @@ async def mijozlar_sana_command(update: Update, context: ContextTypes.DEFAULT_TY
         )
         return
 
+    barber_id = get_barber_id(context)
     db = SessionLocal()
     try:
-        # Belgilangan sanadagi bronlarni olish
+        # Belgilangan sanadagi bronlarni olish (shu sartarosh uchun)
         bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date == date_obj.strftime('%Y-%m-%d'),
             Booking.is_active == True
         ).order_by(Booking.booking_time).all()
@@ -528,16 +559,18 @@ async def mijozlar_sana_command(update: Update, context: ContextTypes.DEFAULT_TY
 @admin_only
 async def statistika_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Umumiy statistikani ko'rsatish"""
+    barber_id = get_barber_id(context)
 
     db = SessionLocal()
     try:
-        # Umumiy statistika
-        total_users = db.query(User).count()
-        total_bookings = db.query(Booking).filter(Booking.is_active == True).count()
+        # Umumiy statistika (shu sartarosh uchun)
+        total_users = db.query(User).filter(User.barber_id == barber_id).count()
+        total_bookings = db.query(Booking).filter(Booking.barber_id == barber_id, Booking.is_active == True).count()
 
         # Bugungi statistika
         today = datetime.now().date()
         today_bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date == today.strftime('%Y-%m-%d'),
             Booking.is_active == True
         ).count()
@@ -545,6 +578,7 @@ async def statistika_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Haftalik statistika
         week_ago = today - timedelta(days=7)
         week_bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date >= week_ago.strftime('%Y-%m-%d'),
             Booking.is_active == True
         ).count()
@@ -552,6 +586,7 @@ async def statistika_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Oylik statistika
         month_ago = today - timedelta(days=30)
         month_bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date >= month_ago.strftime('%Y-%m-%d'),
             Booking.is_active == True
         ).count()
@@ -574,15 +609,16 @@ async def statistika_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 @admin_only
 async def all_bookings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = str(update.effective_user.id)
+    barber_id = get_barber_id(context)
 
     db = SessionLocal()
     try:
-        # So'nggi 7 kunlik bronlar
+        # So'nggi 7 kunlik bronlar (shu sartarosh uchun)
         start_date = datetime.now().date() - timedelta(days=7)
         end_date = datetime.now().date() + timedelta(days=30)
 
         bookings = db.query(Booking).filter(
+            Booking.barber_id == barber_id,
             Booking.booking_date >= start_date.strftime('%Y-%m-%d'),
             Booking.booking_date <= end_date.strftime('%Y-%m-%d'),
             Booking.is_active == True
@@ -652,14 +688,15 @@ async def sheets_url_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 @super_admin_only
 async def super_admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Super Admin paneli"""
+    barber_id = get_barber_id(context)
     db = SessionLocal()
     try:
-        # Umumiy ma'lumotlar
-        total_users = db.query(User).count()
-        total_bookings = db.query(Booking).filter(Booking.is_active == True).count()
+        # Umumiy ma'lumotlar (shu sartarosh uchun)
+        total_users = db.query(User).filter(User.barber_id == barber_id).count()
+        total_bookings = db.query(Booking).filter(Booking.barber_id == barber_id, Booking.is_active == True).count()
 
         # Oxirgi 10 ta bron
-        recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(10).all()
+        recent_bookings = db.query(Booking).filter(Booking.barber_id == barber_id).order_by(Booking.created_at.desc()).limit(10).all()
 
         message = "👑 **SUPER ADMIN PANEL**\n\n"
         message += f"📊 **Umumiy statistika:**\n"
@@ -693,15 +730,57 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.error("🚨 CONFLICT DETECTED: Another bot instance is running!")
         logger.error("Please stop all other bot instances and try again.")
 
+def create_bot_application(bot_token, barber_id):
+    """
+    Bot application yaratish (bot_manager.py dan chaqiriladi).
+    Har bir sartarosh uchun alohida bot instance yaratadi.
+    """
+    # Barber ma'lumotlarini olish
+    db = SessionLocal()
+    try:
+        barber = db.query(Barber).filter(Barber.id == barber_id).first()
+        barber_name = barber.name if barber else f"Barber-{barber_id}"
+    finally:
+        db.close()
+
+    application = Application.builder().token(bot_token).build()
+
+    # Bot data ga barber_id va barber_name saqlash
+    application.bot_data['barber_id'] = barber_id
+    application.bot_data['barber_name'] = barber_name
+
+    # Add error handler
+    application.add_error_handler(error_handler)
+
+    # Handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("mijozlar", mijozlar_command))
+    application.add_handler(CommandHandler("mijozlar_sana", mijozlar_sana_command))
+    application.add_handler(CommandHandler("statistika", statistika_command))
+    application.add_handler(CommandHandler("super_admin", super_admin_panel))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(MessageHandler(filters.CONTACT, handle_message))
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+
+    logger.info(f"✅ [{barber_name}] Bot application yaratildi (barber_id={barber_id})")
+    return application
+
+
 def main() -> None:
+    """Yagona bot ishga tushirish (eski usul, backward compatible)"""
     if not BOT_TOKEN:
         logger.error("❌ BOT_TOKEN topilmadi! .env faylini tekshiring.")
         return
 
-    logger.info("🤖 Bot ishga tushmoqda...")
+    logger.info("🤖 Bot ishga tushmoqda (single mode)...")
     create_tables()
 
     application = Application.builder().token(BOT_TOKEN).build()
+
+    # Default barber_id = None (eski rejimda)
+    application.bot_data['barber_id'] = None
+    application.bot_data['barber_name'] = 'Default'
 
     # Add error handler
     application.add_error_handler(error_handler)
