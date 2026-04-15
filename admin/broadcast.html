@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xabar yuborish - Barbers Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>💈 Barbers Admin</h1>
+            <div class="header-actions">
+                <nav class="nav">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="barbers.html">Sartaroshlar</a>
+                    <a href="services.html">Xizmatlar</a>
+                    <a href="bookings.html">Bronlar</a>
+                    <a href="broadcast.html" class="active">Xabar yuborish</a>
+                </nav>
+                <button onclick="Auth.logout()" class="btn btn-secondary btn-sm">
+                    Chiqish
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Broadcast Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📢 Mijozlarga xabar yuborish</h2>
+            </div>
+
+            <form id="broadcastForm">
+                <div class="form-group">
+                    <label class="form-label" for="broadcastBarber">Sartarosh *</label>
+                    <select id="broadcastBarber" class="form-select" required onchange="updateUserCount()">
+                        <option value="">Tanlang...</option>
+                    </select>
+                </div>
+
+                <div id="userCountInfo" style="display: none; margin-bottom: 1rem;">
+                    <span class="badge badge-info" id="userCountBadge">0 ta mijoz</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="broadcastMessage">Xabar matni *</label>
+                    <textarea
+                        id="broadcastMessage"
+                        class="form-input"
+                        rows="6"
+                        placeholder="Mijozlarga yuboriladigan xabar matnini yozing...
+
+Masalan: Hurmatli mijozlar! Bugun 50% chegirma! Bron qiling!"
+                        required
+                        style="resize: vertical;"
+                    ></textarea>
+                    <small style="color: var(--gray-500);">Markdown formatlash: *qalin*, _kursiv_</small>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button type="submit" class="btn btn-primary" id="sendBtn">
+                        📤 Xabar yuborish
+                    </button>
+                    <span id="sendingStatus" style="display: none; color: var(--gray-500);">
+                        Yuborilmoqda...
+                    </span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result -->
+        <div id="broadcastResult" class="card" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">Natija</h3>
+            </div>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Load barbers for dropdown
+        async function loadBarbers() {
+            try {
+                const barbers = await API.getBarbers({ is_active: true });
+                const select = document.getElementById('broadcastBarber');
+                select.innerHTML = '<option value="">Tanlang...</option>' +
+                    barbers.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            } catch (error) {
+                showNotification('Sartaroshlarni yuklashda xatolik', 'error');
+            }
+        }
+
+        // Update user count when barber selected
+        async function updateUserCount() {
+            const barberId = document.getElementById('broadcastBarber').value;
+            const countInfo = document.getElementById('userCountInfo');
+            const countBadge = document.getElementById('userCountBadge');
+
+            if (!barberId) {
+                countInfo.style.display = 'none';
+                return;
+            }
+
+            try {
+                const data = await API.request(`/api/users/count?barber_id=${barberId}`);
+                countBadge.textContent = `${data.count} ta mijoz`;
+                countInfo.style.display = 'block';
+            } catch (error) {
+                countInfo.style.display = 'none';
+            }
+        }
+
+        // Send broadcast
+        document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const barberId = document.getElementById('broadcastBarber').value;
+            const message = document.getElementById('broadcastMessage').value.trim();
+
+            if (!barberId || !message) return;
+
+            if (!confirm('Xabarni barcha mijozlarga yubormoqchimisiz?')) return;
+
+            const sendBtn = document.getElementById('sendBtn');
+            const sendingStatus = document.getElementById('sendingStatus');
+            sendBtn.disabled = true;
+            sendingStatus.style.display = 'inline';
+
+            try {
+                const result = await API.request('/api/broadcast', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        barber_id: parseInt(barberId),
+                        message: message
+                    })
+                });
+
+                // Show result
+                const resultDiv = document.getElementById('broadcastResult');
+                const resultContent = document.getElementById('resultContent');
+                resultDiv.style.display = 'block';
+
+                resultContent.innerHTML = `
+                    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <div>
+                            <strong style="color: var(--success-color); font-size: 1.5rem;">${result.sent}</strong>
+                            <p style="color: var(--gray-600);">Yuborildi</p>
+                        </div>
+                        ${result.failed > 0 ? `
+                        <div>
+                            <strong style="color: var(--danger-color); font-size: 1.5rem;">${result.failed}</strong>
+                            <p style="color: var(--gray-600);">Xatolik</p>
+                        </div>
+                        ` : ''}
+                        <div>
+                            <strong style="font-size: 1.5rem;">${result.total}</strong>
+                            <p style="color: var(--gray-600);">Jami mijozlar</p>
+                        </div>
+                    </div>
+                `;
+
+                showNotification(result.message, 'success');
+                document.getElementById('broadcastMessage').value = '';
+
+            } catch (error) {
+                showNotification(error.message || 'Xabar yuborishda xatolik', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendingStatus.style.display = 'none';
+            }
+        });
+
+        // Init
+        loadBarbers();
+    </script>
+</body>
+</html>

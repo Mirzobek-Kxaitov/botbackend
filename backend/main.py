@@ -8,6 +8,7 @@ from database import get_db, Booking, User, BookingService, Barber, Service, cre
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import os
+import logging
 import httpx
 from sqlalchemy.exc import IntegrityError
 import pytz
@@ -824,6 +825,69 @@ async def restart_all_bots():
         "success": True,
         "message": f"{len(_bot_manager.running_bots)} ta bot qayta ishga tushirildi"
     }
+
+# ==================== BROADCAST ENDPOINTS ====================
+
+class BroadcastRequest(BaseModel):
+    barber_id: int
+    message: str
+
+@app.post("/api/broadcast")
+async def broadcast_message(request: BroadcastRequest, db: Session = Depends(get_db)):
+    """Sartarosh mijozlariga xabar yuborish"""
+    if not _bot_manager:
+        raise HTTPException(status_code=503, detail="Bot manager ishlamayapti")
+
+    barber = db.query(Barber).filter(Barber.id == request.barber_id).first()
+    if not barber:
+        raise HTTPException(status_code=404, detail="Sartarosh topilmadi")
+
+    if request.barber_id not in _bot_manager.running_bots:
+        raise HTTPException(status_code=400, detail=f"{barber.name} boti ishlamayapti. Avval botni ishga tushiring.")
+
+    # Bu sartarosh mijozlarini olish
+    users = db.query(User).filter(User.barber_id == request.barber_id).all()
+
+    if not users:
+        return {"success": False, "sent": 0, "failed": 0, "total": 0, "message": "Mijozlar topilmadi"}
+
+    # Bot application dan bot objectni olish
+    application = _bot_manager.running_bots[request.barber_id]
+    bot = application.bot
+
+    sent = 0
+    failed = 0
+    for user in users:
+        try:
+            await bot.send_message(
+                chat_id=int(user.telegram_id),
+                text=f"📢 {barber.name} sartaroshxonasidan xabar:\n\n{request.message}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+        except Exception as e:
+            failed += 1
+            logging.getLogger(__name__).error(f"Broadcast failed for user {user.telegram_id}: {e}")
+
+    return {
+        "success": True,
+        "sent": sent,
+        "failed": failed,
+        "total": len(users),
+        "message": f"{sent} ta mijozga xabar yuborildi" + (f", {failed} ta xatolik" if failed else "")
+    }
+
+@app.get("/api/users/count")
+async def get_users_count(
+    barber_id: Optional[int] = Query(None, description="Filter by barber ID"),
+    db: Session = Depends(get_db)
+):
+    """Mijozlar sonini olish"""
+    query = db.query(User)
+    if barber_id is not None:
+        query = query.filter(User.barber_id == barber_id)
+    count = query.count()
+    return {"count": count, "barber_id": barber_id}
 
 # ==================== ADMIN PANEL (mount at the end) ====================
 # Admin panel mount eng oxirida bo'lishi kerak, chunki u barcha sub-pathlarni ushlab oladi
