@@ -3,10 +3,8 @@ Multi-Bot Manager
 Har bir sartarosh uchun alohida Telegram bot ishga tushiradi.
 """
 
-import os
 import logging
 import asyncio
-import signal
 from sqlalchemy.orm import sessionmaker
 from database import engine, Barber, create_tables
 from bot import create_bot_application
@@ -101,40 +99,5 @@ async def stop_all_bots():
     logger.info("✅ Barcha botlar to'xtatildi")
 
 
-async def main():
-    """Asosiy funksiya"""
-    # Register bot manager with FastAPI for dynamic bot control
-    try:
-        import main as main_module
-        import sys
-        current_module = sys.modules[__name__]
-        main_module.set_bot_manager(current_module)
-        logger.info("✅ Bot manager FastAPI ga ulandi")
-    except Exception as e:
-        logger.warning(f"⚠️ Bot manager FastAPI ga ulanmadi: {e}")
-
-    await start_all_bots()
-
-    if not running_bots:
-        logger.info("Hech qanday bot ishga tushmadi. Kutish rejimida...")
-        # Botlar yo'q bo'lsa ham manager ishlayveradi (API orqali qo'shish uchun)
-
-    # Keep running until interrupted
-    stop_event = asyncio.Event()
-
-    def signal_handler():
-        stop_event.set()
-
-    loop = asyncio.get_event_loop()
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, signal_handler)
-
-    logger.info("🟢 Bot manager ishlayapti. Ctrl+C bilan to'xtatish mumkin.")
-    await stop_event.wait()
-
-    # Cleanup
-    await stop_all_bots()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Note: bot_manager now runs inside FastAPI via startup event in main.py
+# Standalone mode (python bot_manager.py) is no longer needed.

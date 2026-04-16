@@ -142,9 +142,36 @@ if os.getenv("SUPER_ADMIN_CHAT_ID"):
 # Barcha adminlar (Admin + Super Admin)
 ALL_ADMIN_IDS = ADMIN_CHAT_IDS + SUPER_ADMIN_CHAT_IDS
 
+# Bot manager reference (set at startup)
+_bot_manager = None
+
+def set_bot_manager(manager_module):
+    """Bot manager modulini o'rnatish"""
+    global _bot_manager
+    _bot_manager = manager_module
+
 @app.on_event("startup")
 async def startup():
     create_tables()
+
+    # Bot managerni shu processda ishga tushirish
+    try:
+        import bot_manager
+        set_bot_manager(bot_manager)
+        await bot_manager.start_all_bots()
+        logging.getLogger(__name__).info(f"✅ Bot manager ishga tushdi: {len(bot_manager.running_bots)} ta bot")
+    except Exception as e:
+        logging.getLogger(__name__).error(f"❌ Bot manager ishga tushmadi: {e}", exc_info=True)
+
+@app.on_event("shutdown")
+async def shutdown():
+    """FastAPI to'xtaganda botlarni ham to'xtatish"""
+    try:
+        import bot_manager
+        await bot_manager.stop_all_bots()
+        logging.getLogger(__name__).info("✅ Barcha botlar to'xtatildi")
+    except Exception as e:
+        logging.getLogger(__name__).error(f"❌ Bot to'xtatishda xatolik: {e}")
 
 @app.get("/")
 async def root():
@@ -741,14 +768,6 @@ async def delete_service(service_id: int, db: Session = Depends(get_db)):
         }
 
 # ==================== BOT MANAGEMENT ENDPOINTS ====================
-
-# Bot manager reference (set by bot_manager.py at startup)
-_bot_manager = None
-
-def set_bot_manager(manager_module):
-    """Bot manager modulini o'rnatish (bot_manager.py dan chaqiriladi)"""
-    global _bot_manager
-    _bot_manager = manager_module
 
 @app.get("/api/bots/status")
 async def get_bots_status():
