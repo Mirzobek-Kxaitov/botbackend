@@ -18,7 +18,7 @@ services:
       - key: SUPER_ADMIN_CHAT_ID
         sync: false
       - key: DATABASE_URL
-        value: sqlite:///./bookings.db
+        sync: false  # Manual: Render Dashboard'dan barbers-db Internal URL qo'ying
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
