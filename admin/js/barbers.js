@@ -137,6 +137,7 @@ async function editBarber(id) {
         document.getElementById('modalTitle').textContent = 'Sartaroshni tahrirlash';
         document.getElementById('barberName').value = barber.name;
         document.getElementById('barberToken').value = barber.bot_token;
+        document.getElementById('barberAdminTgId').value = barber.admin_telegram_id || '';
         document.getElementById('barberPhone').value = barber.phone || '';
         document.getElementById('barberImageUrl').value = barber.image_url || '';
         document.getElementById('barberWorkStart').value = barber.work_start;
@@ -164,6 +165,7 @@ async function saveBarber(event) {
     const formData = {
         name: document.getElementById('barberName').value,
         bot_token: document.getElementById('barberToken').value,
+        admin_telegram_id: document.getElementById('barberAdminTgId').value || null,
         phone: document.getElementById('barberPhone').value || null,
         image_url: document.getElementById('barberImageUrl').value || null,
         work_start: document.getElementById('barberWorkStart').value,

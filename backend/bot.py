@@ -345,8 +345,17 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         except Exception as e:
             logger.error(f"Google Sheets export xatoligi: {e}")
 
-        # Admin va Super Admin'ga xabar yuborish
-        if ALL_ADMIN_IDS:
+        # Sartaroshga xabar yuborish (barber'ning o'z admin_telegram_id'siga)
+        barber_admin_id = None
+        db_session = SessionLocal()
+        try:
+            barber_obj = db_session.query(Barber).filter(Barber.id == barber_id).first()
+            if barber_obj and barber_obj.admin_telegram_id:
+                barber_admin_id = barber_obj.admin_telegram_id.strip()
+        finally:
+            db_session.close()
+
+        if barber_admin_id:
             try:
                 # Xizmatlar ro'yxatini yaratish
                 services_text = ""
@@ -355,25 +364,8 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     for service in new_booking.services:
                         services_text += f"   • {service.service_name} - {service.price:,.0f} so'm ({service.duration} soat)\n"
 
-                # Super Admin uchun maxsus xabar (ko'proq ma'lumot bilan)
-                super_admin_message = (
-                    f"👑 **YANGI BRON QILINDI!** (Super Admin)\n\n"
-                    f"👤 **Mijoz:** {user.name}\n"
-                    f"📱 **Telefon:** {user.phone}\n"
-                    f"🆔 **Telegram ID:** {user_id}\n"
-                    f"📅 **Sana:** {booking_date}\n"
-                    f"⏰ **Vaqt:** {booking_time}\n"
-                    f"⏱ **Davomiyligi:** {total_duration} soat"
-                    f"{services_text}\n"
-                    f"💰 **Jami summa:** {total_price:,.0f} so'm\n"
-                    f"🆔 **Bron ID:** #{new_booking.id}\n\n"
-                    f"📋 Bugungi mijozlar: /mijozlar\n"
-                    f"📊 Statistika: /statistika"
-                )
-
-                # Oddiy Admin uchun xabar
                 admin_message = (
-                    f"🎉 **YANGI BRON QILINDI!**\n\n"
+                    f"🎉 **YANGI BRON!**\n\n"
                     f"👤 **Mijoz:** {user.name}\n"
                     f"📱 **Telefon:** {user.phone}\n"
                     f"📅 **Sana:** {booking_date}\n"
@@ -381,35 +373,17 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     f"⏱ **Davomiyligi:** {total_duration} soat"
                     f"{services_text}\n"
                     f"💰 **Jami summa:** {total_price:,.0f} so'm\n"
-                    f"🆔 **Bron ID:** #{new_booking.id}\n\n"
-                    f"📋 Bugungi mijozlar: /mijozlar\n"
-                    f"📊 Statistika: /statistika"
+                    f"🆔 **Bron ID:** #{new_booking.id}"
                 )
 
-                # Super Admin larga yuborish
-                if SUPER_ADMIN_CHAT_IDS:
-                    for super_admin_id in SUPER_ADMIN_CHAT_IDS:
-                        await context.bot.send_message(
-                            chat_id=super_admin_id,
-                            text=super_admin_message,
-                            parse_mode='Markdown'
-                        )
-                    logger.info(f"Super Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
-
-                # Oddiy Admin larga yuborish (Super Adminlarni chiqarib tashlash)
-                if ADMIN_CHAT_IDS:
-                    for admin_id in ADMIN_CHAT_IDS:
-                        # Agar bu admin Super Admin bo'lmasa, faqat shunda yuborish
-                        if not SUPER_ADMIN_CHAT_IDS or admin_id not in SUPER_ADMIN_CHAT_IDS:
-                            await context.bot.send_message(
-                                chat_id=admin_id,
-                                text=admin_message,
-                                parse_mode='Markdown'
-                            )
-                    logger.info(f"Admin'ga yangi bron haqida xabar yuborildi: #{new_booking.id}")
-
+                await context.bot.send_message(
+                    chat_id=int(barber_admin_id),
+                    text=admin_message,
+                    parse_mode='Markdown'
+                )
+                logger.info(f"[{barber_name}] Yangi bron haqida sartaroshga xabar yuborildi: #{new_booking.id}")
             except Exception as e:
-                logger.error(f"Admin'ga xabar yuborishda xatolik: {e}")
+                logger.error(f"[{barber_name}] Sartaroshga xabar yuborishda xatolik: {e}")
 
         # Foydalanuvchiga ham batafsil ma'lumot
         # Xizmatlar ro'yxatini yaratish (foydalanuvchi uchun)

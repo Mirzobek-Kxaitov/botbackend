@@ -67,6 +67,7 @@ class BookingResponse(BaseModel):
 class BarberCreate(BaseModel):
     name: str
     bot_token: str
+    admin_telegram_id: Optional[str] = None
     phone: Optional[str] = None
     image_url: Optional[str] = None
     work_start: str = "09:00"
@@ -77,6 +78,7 @@ class BarberCreate(BaseModel):
 class BarberUpdate(BaseModel):
     name: Optional[str] = None
     bot_token: Optional[str] = None
+    admin_telegram_id: Optional[str] = None
     phone: Optional[str] = None
     image_url: Optional[str] = None
     work_start: Optional[str] = None
@@ -88,6 +90,7 @@ class BarberResponse(BaseModel):
     id: int
     name: str
     bot_token: str
+    admin_telegram_id: Optional[str]
     phone: Optional[str]
     image_url: Optional[str]
     work_start: str
@@ -177,6 +180,32 @@ async def reset_database(secret: str = Query(..., description="Admin secret")):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         return {"success": True, "message": "Barcha jadvallar qayta yaratildi"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Xatolik: {str(e)}")
+
+@app.post("/api/admin/add-admin-telegram-id")
+async def add_admin_telegram_id_column(secret: str = Query(..., description="Admin secret")):
+    """Barbers jadvaliga admin_telegram_id kolonkasini qo'shish (ma'lumotlarni yo'qotmasdan)"""
+    if secret != "migrate-2026":
+        raise HTTPException(status_code=403, detail="Noto'g'ri secret")
+
+    from sqlalchemy import text
+    from database import engine
+
+    try:
+        with engine.connect() as conn:
+            # Check if column already exists
+            result = conn.execute(text("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name='barbers' AND column_name='admin_telegram_id'
+            """))
+            if result.fetchone():
+                return {"success": True, "message": "Kolonka allaqachon mavjud"}
+
+            # Add the column
+            conn.execute(text("ALTER TABLE barbers ADD COLUMN admin_telegram_id VARCHAR"))
+            conn.commit()
+            return {"success": True, "message": "admin_telegram_id kolonkasi qo'shildi"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Xatolik: {str(e)}")
 
@@ -530,6 +559,7 @@ async def create_barber(barber: BarberCreate, db: Session = Depends(get_db)):
     new_barber = Barber(
         name=barber.name,
         bot_token=barber.bot_token,
+        admin_telegram_id=barber.admin_telegram_id,
         phone=barber.phone,
         image_url=barber.image_url,
         work_start=barber.work_start,
