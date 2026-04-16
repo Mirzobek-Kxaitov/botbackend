@@ -14,7 +14,16 @@ if (tg.themeParams) {
 let selectedDate = null;
 let selectedTime = null;
 let selectedServices = []; // Tanlangan xizmatlar
+let currentBarber = null; // Sartarosh ma'lumotlari
+let availableServices = []; // API'dan yuklangan xizmatlar
 const API_BASE_URL = window.location.origin; // Use same origin as frontend
+
+// URL'dan barber_id ni olish
+function getBarberIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const barberId = params.get('barber');
+    return barberId ? parseInt(barberId) : null;
+}
 
 // Helper function for fetch with ngrok headers
 async function fetchAPI(url, options = {}) {
@@ -36,13 +45,103 @@ async function fetchAPI(url, options = {}) {
 }
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Sartarosh ma'lumotlari va xizmatlarni yuklash
+    await loadBarberData();
+
     generateCalendar();
     setupEventListeners();
     setupQuickDateButtons();
     setupAdminPanel();
     setupServiceListeners();
 });
+
+// Sartarosh ma'lumotlari va xizmatlarini yuklash
+async function loadBarberData() {
+    const barberId = getBarberIdFromURL();
+
+    if (!barberId) {
+        console.warn('Barber ID URL parametrda yo\'q');
+        return;
+    }
+
+    try {
+        // Sartarosh va xizmatlarni parallel yuklash
+        const [barberResp, servicesResp] = await Promise.all([
+            fetchAPI(`${API_BASE_URL}/api/barbers/${barberId}`),
+            fetchAPI(`${API_BASE_URL}/api/services?barber_id=${barberId}&is_active=true`)
+        ]);
+
+        if (barberResp.ok) {
+            currentBarber = await barberResp.json();
+            updateBarberHeader(currentBarber);
+        }
+
+        if (servicesResp.ok) {
+            availableServices = await servicesResp.json();
+            renderServices(availableServices);
+        }
+    } catch (error) {
+        console.error('Sartarosh ma\'lumotlarini yuklashda xatolik:', error);
+    }
+}
+
+// Header'da sartarosh ismi va rasmini yangilash
+function updateBarberHeader(barber) {
+    const nameEl = document.getElementById('barber-name');
+    const imageEl = document.getElementById('barber-image');
+
+    if (nameEl) {
+        nameEl.textContent = barber.name.toUpperCase();
+    }
+
+    if (imageEl && barber.image_url) {
+        imageEl.src = barber.image_url;
+        imageEl.alt = barber.name;
+    }
+
+    // Sahifa title'ni ham yangilash
+    document.title = `${barber.name} - Bron qilish`;
+}
+
+// Xizmatlarni ro'yxatga render qilish
+function renderServices(services) {
+    const container = document.getElementById('service-list');
+    if (!container) return;
+
+    if (services.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-6" style="color: var(--text-gray);">
+                Hozircha xizmatlar qo'shilmagan
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = services.map(service => `
+        <label class="service-item flex items-center justify-between p-4 rounded-xl cursor-pointer" style="background: white; border: 2px solid var(--accent-gray); transition: all 0.2s;">
+            <div class="flex items-center">
+                <input type="checkbox" class="service-checkbox w-5 h-5 mr-3"
+                       data-service="${service.id}"
+                       data-name="${service.name}"
+                       data-price="${service.price}"
+                       data-duration="${service.duration}">
+                <div>
+                    <div class="font-semibold" style="color: var(--text-dark);">${service.name}</div>
+                    <div class="text-sm" style="color: var(--text-gray);">${service.duration} soat</div>
+                </div>
+            </div>
+            <div class="font-bold" style="color: var(--text-dark);">${formatPrice(service.price)}</div>
+        </label>
+    `).join('');
+
+    // Service listener'larni qayta ulash
+    setupServiceListeners();
+}
+
+function formatPrice(price) {
+    return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
+}
 
 // Generate calendar for current and next month
 function generateCalendar() {
@@ -183,7 +282,9 @@ async function loadAvailableTimes(date, duration = 1) {
     timeSlots.innerHTML = '';
 
     try {
-        const response = await fetchAPI(`${API_BASE_URL}/available-times/${date}?duration=${duration}`);
+        const barberId = getBarberIdFromURL();
+        const barberParam = barberId ? `&barber_id=${barberId}` : '';
+        const response = await fetchAPI(`${API_BASE_URL}/available-times/${date}?duration=${duration}${barberParam}`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -434,7 +535,7 @@ function handleServiceSelection() {
 
     checkedBoxes.forEach(checkbox => {
         selectedServices.push({
-            name: checkbox.closest('label').querySelector('.font-semibold').textContent,
+            name: checkbox.dataset.name || checkbox.closest('label').querySelector('.font-semibold').textContent,
             service: checkbox.dataset.service,
             price: parseInt(checkbox.dataset.price),
             duration: parseInt(checkbox.dataset.duration)
@@ -539,6 +640,7 @@ function confirmBooking() {
     const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
 
     const bookingData = {
+        barber_id: getBarberIdFromURL(),
         date: selectedDate,
         time: selectedTime,
         services: selectedServices,

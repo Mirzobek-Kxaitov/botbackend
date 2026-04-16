@@ -69,6 +69,15 @@ def get_barber_name(context):
     return context.bot_data.get('barber_name', 'Sartarosh')
 
 
+def build_webapp_url(context):
+    """WebApp URL'ga barber_id parametrini qo'shish"""
+    barber_id = get_barber_id(context)
+    if barber_id:
+        separator = '&' if '?' in WEBAPP_URL else '?'
+        return f"{WEBAPP_URL}{separator}barber={barber_id}"
+    return WEBAPP_URL
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     username = update.effective_user.username or "yo'q"
@@ -133,7 +142,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 # Oddiy foydalanuvchilar uchun
                 keyboard = [
-                    [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
+                    [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=build_webapp_url(context)))]
                 ]
                 reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -236,7 +245,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 logger.info(f"WEB_APP_URL: {WEBAPP_URL}")
 
                 keyboard = [
-                    [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=WEBAPP_URL))]
+                    [KeyboardButton("✂️ BRON QILISH", web_app=WebAppInfo(url=build_webapp_url(context)))]
                 ]
                 reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 

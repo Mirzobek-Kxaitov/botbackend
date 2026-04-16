@@ -236,23 +236,26 @@ async def api_root():
 @app.get("/available-times/today")
 async def get_today_available_times(
     duration: Optional[int] = Query(1, description="Jami kerakli soatlar"),
+    barber_id: Optional[int] = Query(None, description="Sartarosh ID"),
     db: Session = Depends(get_db)
 ):
     today = datetime.now().strftime("%Y-%m-%d")
-    return await get_available_times_internal(today, duration, db)
+    return await get_available_times_internal(today, duration, db, barber_id)
 
 @app.get("/available-times/tomorrow")
 async def get_tomorrow_available_times(
     duration: Optional[int] = Query(1, description="Jami kerakli soatlar"),
+    barber_id: Optional[int] = Query(None, description="Sartarosh ID"),
     db: Session = Depends(get_db)
 ):
     tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-    return await get_available_times_internal(tomorrow, duration, db)
+    return await get_available_times_internal(tomorrow, duration, db, barber_id)
 
 @app.get("/available-times/{date}")
 async def get_available_times(
     date: str,
     duration: Optional[int] = Query(1, description="Jami kerakli soatlar"),
+    barber_id: Optional[int] = Query(None, description="Sartarosh ID"),
     db: Session = Depends(get_db)
 ):
     try:
@@ -260,10 +263,22 @@ async def get_available_times(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
 
-    return await get_available_times_internal(date, duration, db)
+    return await get_available_times_internal(date, duration, db, barber_id)
 
-async def get_available_times_internal(date: str, duration: int, db: Session):
-    all_times = [f"{hour:02d}:00" for hour in range(9, 22)]
+async def get_available_times_internal(date: str, duration: int, db: Session, barber_id: Optional[int] = None):
+    # Ish soatlarini sartaroshdan olish (agar barber_id berilgan bo'lsa)
+    work_start_hour = 9
+    work_end_hour = 22
+    if barber_id:
+        barber = db.query(Barber).filter(Barber.id == barber_id).first()
+        if barber:
+            try:
+                work_start_hour = int(barber.work_start.split(':')[0])
+                work_end_hour = int(barber.work_end.split(':')[0])
+            except (ValueError, AttributeError):
+                pass
+
+    all_times = [f"{hour:02d}:00" for hour in range(work_start_hour, work_end_hour)]
 
     # Hozirgi vaqtni olish (real-time validation) - Tashkent timezone
     tashkent_tz = pytz.timezone('Asia/Tashkent')
@@ -276,11 +291,14 @@ async def get_available_times_internal(date: str, duration: int, db: Session):
         # Hozirgi vaqtdan keyingi vaqtlarni filtrlash
         all_times = [time for time in all_times if int(time.split(':')[0]) > current_hour]
 
-    # Band qilingan vaqtlarni olish
-    bookings = db.query(Booking).filter(
+    # Band qilingan vaqtlarni olish (faqat shu sartaroshniki)
+    bookings_query = db.query(Booking).filter(
         Booking.booking_date == date,
         Booking.is_active == True
-    ).all()
+    )
+    if barber_id:
+        bookings_query = bookings_query.filter(Booking.barber_id == barber_id)
+    bookings = bookings_query.all()
 
     # Har bir bron uchun band qilingan barcha soatlarni hisoblash
     # Agar 10:00 da 2 soatlik bron bo'lsa, 10:00-12:00 band (10:00, 11:00, 12:00)
@@ -290,7 +308,7 @@ async def get_available_times_internal(date: str, duration: int, db: Session):
         end_hour = start_hour + booking.total_duration
         # Boshlanish vaqtidan tugash vaqtigacha barcha soatlarni band qilish
         for hour in range(start_hour, end_hour + 1):
-            if hour <= 22:  # Maksimal ish vaqti
+            if hour <= work_end_hour:  # Maksimal ish vaqti
                 booked_hours.add(f"{hour:02d}:00")
 
     # Mavjud vaqtlarni topish (duration soatlik ketma-ket bo'sh oraliq kerak)
@@ -301,7 +319,7 @@ async def get_available_times_internal(date: str, duration: int, db: Session):
         is_available = True
         for i in range(duration):
             check_time = f"{start_hour + i:02d}:00"
-            if check_time in booked_hours or start_hour + i >= 22:
+            if check_time in booked_hours or start_hour + i >= work_end_hour:
                 is_available = False
                 break
         if is_available:
