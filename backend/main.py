@@ -163,6 +163,23 @@ async def startup():
     except Exception as e:
         logging.getLogger(__name__).error(f"❌ Bot manager ishga tushmadi: {e}", exc_info=True)
 
+@app.post("/api/admin/reset-database")
+async def reset_database(secret: str = Query(..., description="Admin secret")):
+    """
+    DIQQAT: Barcha jadvallarni o'chirib qayta yaratadi.
+    Faqat birinchi migration uchun ishlatiladi.
+    """
+    if secret != "reset-barbers-2026":
+        raise HTTPException(status_code=403, detail="Noto'g'ri secret")
+
+    from database import Base, engine
+    try:
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        return {"success": True, "message": "Barcha jadvallar qayta yaratildi"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Xatolik: {str(e)}")
+
 @app.on_event("shutdown")
 async def shutdown():
     """FastAPI to'xtaganda botlarni ham to'xtatish"""
